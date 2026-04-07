@@ -1,0 +1,1055 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import AppShell from "@/components/AppShell";
+import type { User } from "@/lib/auth";
+
+const ANNOUNCEMENT_DATE = "2026-05-04";
+const VOTE_DATE = "2026-05-11";
+
+interface Task {
+  id: number;
+  title: string;
+  category: string;
+  status: string;
+  due_date: string;
+  assignee_name: string;
+  playbook_conditions: string;
+  playbook_criteria: string;
+  playbook_pitfalls: string;
+}
+
+function getPlaybookCounts(task: Task) {
+  let pitfalls = 0, conditions = 0;
+  try { pitfalls = (JSON.parse(task.playbook_pitfalls || "[]") as unknown[]).length; } catch { /* ignore */ }
+  try { conditions = (JSON.parse(task.playbook_conditions || "[]") as unknown[]).length; } catch { /* ignore */ }
+  return { pitfalls, conditions };
+}
+
+interface DashboardClientProps {
+  user: User;
+  tasks: Task[];
+  allTasks?: Task[];
+  todayTasks: Task[];
+  tomorrowTasks: Task[];
+  today: string;
+  tomorrow: string;
+  demoMode?: boolean;
+}
+
+const STATUS_CONFIG = {
+  "未着手":   { dot: "bg-gray-400",    badge: "bg-gray-100 text-gray-500 border border-gray-200",        label: "未着手" },
+  "進行中":   { dot: "bg-blue-500",    badge: "bg-blue-50 text-blue-700 border border-blue-200",          label: "進行中" },
+  "確認待ち": { dot: "bg-yellow-500",  badge: "bg-yellow-50 text-yellow-700 border border-yellow-200",    label: "確認待ち" },
+  "完了":     { dot: "bg-emerald-500", badge: "bg-emerald-50 text-emerald-700 border border-emerald-200", label: "完了" },
+} as const;
+
+const GANTT_BADGE: Record<string, { dot: string; bg: string; text: string; border: string }> = {
+  "未着手":   { dot: "bg-gray-400",   bg: "bg-gray-50",   text: "text-gray-500",   border: "border-gray-200" },
+  "進行中":   { dot: "bg-blue-500",   bg: "bg-blue-50",   text: "text-blue-700",   border: "border-blue-200" },
+  "確認待ち": { dot: "bg-yellow-500", bg: "bg-yellow-50", text: "text-yellow-700", border: "border-yellow-200" },
+};
+
+function formatDate(dateStr: string) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr + "T00:00:00");
+  return `${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
+function formatMMDD(dateStr: string) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr + "T00:00:00");
+  return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+function getDayDiff(dateStr: string, baseDate: string): number {
+  const base = new Date(baseDate + "T00:00:00");
+  const target = new Date(dateStr + "T00:00:00");
+  return Math.round((target.getTime() - base.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function getCategoryStats(tasks: Task[]) {
+  const cats: Record<string, { tasks: Task[] }> = {};
+  tasks.forEach(t => {
+    if (!cats[t.category]) cats[t.category] = { tasks: [] };
+    cats[t.category].tasks.push(t);
+  });
+  return cats;
+}
+
+export default function DashboardClient({
+  user, tasks, allTasks = [], todayTasks, tomorrowTasks, today, demoMode = false,
+}: DashboardClientProps) {
+  const [activeTab, setActiveTab] = useState<"morning" | "list" | "gantt" | "roadmap">("morning");
+  const [showCompleted, setShowCompleted] = useState(false);
+
+  const categories = getCategoryStats(tasks);
+  const categoryNames = Object.keys(categories);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    categoryNames.length > 0 ? categoryNames[0] : null
+  );
+
+  const alertTaskIds = new Set([...todayTasks.map(t => t.id), ...tomorrowTasks.map(t => t.id)]);
+  const allShownTasks = selectedCategory ? categories[selectedCategory]?.tasks ?? [] : tasks;
+  const shownTasks = showCompleted ? allShownTasks : allShownTasks.filter(t => t.status !== "完了");
+  const completedCount = allShownTasks.filter(t => t.status === "完了").length;
+
+  const totalTasks = tasks.length;
+  const completedTasks = tasks.filter(t => t.status === "完了").length;
+  const inProgressTasks = tasks.filter(t => t.status === "進行中").length;
+  const progressCompleted = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+  const progressInProgress = totalTasks > 0 ? Math.round((inProgressTasks / totalTasks) * 100) : 0;
+
+  // Gantt config
+  const DAYS = 21;
+  const dayOffset = -2;
+  const CELL = 52;
+  const LEFT_W = 240;
+
+  const days: string[] = [];
+  for (let i = dayOffset; i < dayOffset + DAYS; i++) {
+    const d = new Date(today + "T00:00:00");
+    d.setDate(d.getDate() + i);
+    days.push(d.toISOString().split("T")[0]);
+  }
+  const todayIdx = days.indexOf(today);
+  const announcementIdx = days.indexOf(ANNOUNCEMENT_DATE);
+  const voteIdx = days.indexOf(VOTE_DATE);
+
+  const monthGroups: { label: string; count: number }[] = [];
+  days.forEach(day => {
+    const d = new Date(day + "T00:00:00");
+    const label = `${d.getFullYear()}年${d.getMonth() + 1}月`;
+    const last = monthGroups[monthGroups.length - 1];
+    if (last && last.label === label) { last.count++; }
+    else { monthGroups.push({ label, count: 1 }); }
+  });
+
+  const activeTasks = tasks.filter(t => t.status !== "完了");
+
+  return (
+    <AppShell user={user} progressCompleted={progressCompleted} progressInProgress={progressInProgress} demoMode={demoMode}>
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+        {/* ━━━ Tab header ━━━ */}
+        <div className="bg-white border-b border-gray-200 px-6 py-3 shrink-0 flex items-center gap-1">
+          {[
+            { key: "morning",  label: "Today's UniGuide", icon: "☀️" },
+            { key: "list",     label: "タスク一覧",    icon: "☑️" },
+            { key: "gantt",    label: "スケジュール",  icon: "📅" },
+            { key: "roadmap",  label: "ロードマップ",  icon: "🗺️" },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key as "morning" | "list" | "gantt" | "roadmap")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                activeTab === tab.key
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+              }`}
+            >
+              <span>{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ━━━ 朝の確認タブ ━━━ */}
+        {activeTab === "morning" && (() => {
+          // アクションリスト生成: 今日期限 > 明日期限 > 進行中 > 未着手期限近い順
+          const actionItems: { task: Task; reason: "today" | "tomorrow" | "in_progress" | "upcoming" }[] = [];
+          const usedIds = new Set<number>();
+          todayTasks.forEach(t => { actionItems.push({ task: t, reason: "today" }); usedIds.add(t.id); });
+          tomorrowTasks.forEach(t => { actionItems.push({ task: t, reason: "tomorrow" }); usedIds.add(t.id); });
+          activeTasks.filter(t => t.status === "進行中" && !usedIds.has(t.id)).forEach(t => {
+            actionItems.push({ task: t, reason: "in_progress" }); usedIds.add(t.id);
+          });
+          activeTasks
+            .filter(t => t.status === "未着手" && t.due_date && t.due_date > today && !usedIds.has(t.id))
+            .sort((a, b) => a.due_date.localeCompare(b.due_date))
+            .slice(0, Math.max(0, 5 - actionItems.length))
+            .forEach(t => { actionItems.push({ task: t, reason: "upcoming" }); });
+
+          const REASON_CONFIG = {
+            today:       { label: "今日期限", color: "bg-red-500",    text: "text-red-600",    border: "border-red-200",   bg: "bg-red-50/60" },
+            tomorrow:    { label: "明日期限", color: "bg-amber-400",  text: "text-amber-600",  border: "border-amber-200", bg: "bg-amber-50/60" },
+            in_progress: { label: "進行中",   color: "bg-blue-500",   text: "text-blue-600",   border: "border-blue-200",  bg: "bg-blue-50/40" },
+            upcoming:    { label: "次の予定", color: "bg-gray-400",   text: "text-gray-500",   border: "border-gray-200",  bg: "" },
+          };
+
+          const inProgressCount = activeTasks.filter(t => t.status === "進行中").length;
+          const pendingCount = activeTasks.filter(t => t.status === "確認待ち").length;
+          const announceDiff = Math.round((new Date(ANNOUNCEMENT_DATE + "T00:00:00").getTime() - new Date(today + "T00:00:00").getTime()) / 86400000);
+
+          return (
+          <div className="flex-1 overflow-y-auto" style={{ backgroundColor: "#f0f5ff" }}>
+
+            {/* ── ヒーローKPIバー ── */}
+            <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-6 py-4">
+              <p className="text-slate-400 text-[11px] font-semibold mb-3 tracking-wide uppercase">Today's Overview</p>
+              <div className="grid grid-cols-5 gap-3">
+                {/* 今日期限 */}
+                <div className={`rounded-xl px-4 py-3 ${todayTasks.length > 0 ? "bg-red-500/20 border border-red-400/30" : "bg-white/5 border border-white/10"}`}>
+                  <p className="text-[10px] font-semibold text-slate-400 mb-1">今日期限</p>
+                  <p className={`text-2xl font-extrabold tabular-nums ${todayTasks.length > 0 ? "text-red-300" : "text-slate-400"}`}>{todayTasks.length}<span className="text-xs font-normal ml-0.5">件</span></p>
+                </div>
+                {/* 明日期限 */}
+                <div className={`rounded-xl px-4 py-3 ${tomorrowTasks.length > 0 ? "bg-amber-500/20 border border-amber-400/30" : "bg-white/5 border border-white/10"}`}>
+                  <p className="text-[10px] font-semibold text-slate-400 mb-1">明日期限</p>
+                  <p className={`text-2xl font-extrabold tabular-nums ${tomorrowTasks.length > 0 ? "text-amber-300" : "text-slate-400"}`}>{tomorrowTasks.length}<span className="text-xs font-normal ml-0.5">件</span></p>
+                </div>
+                {/* 進行中 */}
+                <div className="rounded-xl px-4 py-3 bg-blue-500/20 border border-blue-400/30">
+                  <p className="text-[10px] font-semibold text-slate-400 mb-1">進行中</p>
+                  <p className="text-2xl font-extrabold tabular-nums text-blue-300">{inProgressCount}<span className="text-xs font-normal ml-0.5">件</span></p>
+                </div>
+                {/* 確認待ち */}
+                <div className={`rounded-xl px-4 py-3 ${pendingCount > 0 ? "bg-yellow-500/20 border border-yellow-400/30" : "bg-white/5 border border-white/10"}`}>
+                  <p className="text-[10px] font-semibold text-slate-400 mb-1">確認待ち</p>
+                  <p className={`text-2xl font-extrabold tabular-nums ${pendingCount > 0 ? "text-yellow-300" : "text-slate-400"}`}>{pendingCount}<span className="text-xs font-normal ml-0.5">件</span></p>
+                </div>
+                {/* 告示まで */}
+                <div className="rounded-xl px-4 py-3 bg-orange-500/20 border border-orange-400/30">
+                  <p className="text-[10px] font-semibold text-slate-400 mb-1">告示まで</p>
+                  <p className="text-2xl font-extrabold tabular-nums text-orange-300">{announceDiff}<span className="text-xs font-normal ml-0.5">日</span></p>
+                </div>
+              </div>
+            </div>
+
+            {/* ── 受電記録ボタン ── */}
+            <div className="px-5 pt-3">
+              <a
+                href="/calls"
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3 rounded-xl text-sm transition w-fit"
+              >
+                📞 受電記録
+              </a>
+            </div>
+
+            {/* ── アクションリスト + スケジュール ── */}
+            <div className="px-5 pb-5 pt-3">
+              <div className="grid gap-4" style={{ gridTemplateColumns: "280px 1fr" }}>
+
+                {/* 左: 今日のアクションリスト */}
+                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                  <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+                    <h2 className="font-bold text-gray-800 text-sm">今日やること</h2>
+                    <span className="ml-auto text-[10px] bg-gray-100 text-gray-500 font-bold px-2 py-0.5 rounded-full">{actionItems.length}件</span>
+                  </div>
+                  {actionItems.length === 0 ? (
+                    <div className="px-5 py-10 text-center">
+                      <p className="text-2xl mb-2">✅</p>
+                      <p className="text-sm text-gray-500 font-medium">今日の対応タスクはありません</p>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-gray-50">
+                      {actionItems.map(({ task, reason }, i) => {
+                        const rc = REASON_CONFIG[reason];
+                        let hint: string | null = null;
+                        try {
+                          const crit = JSON.parse(task.playbook_criteria || "[]");
+                          if (Array.isArray(crit) && crit.length > 0) hint = crit[0].a;
+                        } catch { /* ignore */ }
+                        return (
+                          <Link key={task.id} href={`/tasks/${task.id}`}>
+                            <div className={`flex items-start gap-2 px-2 py-3.5 hover:bg-gray-50/80 transition group ${rc.bg}`}>
+                              {/* 番号 */}
+                              <span className="w-5 h-5 rounded-full bg-gray-100 text-gray-400 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1.5 mb-0.5">
+                                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full text-white shrink-0 ${rc.color}`}>{rc.label}</span>
+                                </div>
+                                <p className="text-sm font-semibold text-gray-800 whitespace-nowrap">{task.title}</p>
+                                <p className="text-[10px] text-gray-400 mt-0.5">{task.category}</p>
+                                {hint && (
+                                  <p className="text-[10px] text-indigo-500 mt-1.5 flex items-start gap-1">
+                                    <span className="shrink-0">💡</span>
+                                    <span className="line-clamp-1">{hint}</span>
+                                  </p>
+                                )}
+                              </div>
+                              {task.due_date && (
+                                <span className={`text-[10px] tabular-nums font-semibold shrink-0 mt-1 ${rc.text}`}>
+                                  {formatDate(task.due_date)}
+                                </span>
+                              )}
+                              <svg className="w-4 h-4 text-gray-200 shrink-0 group-hover:text-blue-300 transition-colors mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* 右: プロジェクト別スケジュール（タスク名行ガント） */}
+                {categoryNames.length > 0 && (() => {
+                  const MINI_DAYS = 14;
+                  const LABEL_W = 280;
+                  const miniDays: string[] = [];
+                  for (let i = 0; i < MINI_DAYS; i++) {
+                    const d = new Date(today + "T00:00:00");
+                    d.setDate(d.getDate() + i);
+                    miniDays.push(d.toISOString().split("T")[0]);
+                  }
+                  const statusDot: Record<string, string> = {
+                    "進行中":   "bg-blue-500",
+                    "確認待ち": "bg-yellow-500",
+                    "未着手":   "bg-gray-400",
+                  };
+                  return (
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                      {/* Header */}
+                      <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                        <h2 className="font-bold text-gray-800 text-sm">プロジェクト別スケジュール</h2>
+                        <span className="ml-auto text-[10px] text-gray-400">今後14日</span>
+                      </div>
+                      {/* Day header row */}
+                      <div className="flex border-b border-gray-100 bg-gray-50/60" style={{ minHeight: 24 }}>
+                        <div className="shrink-0 border-r border-gray-200 bg-gray-50/60" style={{ width: LABEL_W }} />
+                        <div className="flex flex-1">
+                          {miniDays.map((day, i) => {
+                            const d = new Date(day + "T00:00:00");
+                            const isSun = d.getDay() === 0;
+                            const isSat = d.getDay() === 6;
+                            return (
+                              <div key={day} className={`flex-1 flex items-center justify-center border-r border-gray-100 ${
+                                isSun ? "bg-red-50/40" : isSat ? "bg-blue-50/30" : ""
+                              }`}>
+                                <span className={`text-[9px] tabular-nums font-semibold ${
+                                  i === 0 ? "text-red-500" : isSun ? "text-red-300" : isSat ? "text-blue-300" : "text-gray-300"
+                                }`}>{d.getDate()}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      {/* Categories + task rows */}
+                      {categoryNames.map(cat => {
+                        const catTasks = categories[cat].tasks;
+                        const done = catTasks.filter(t => t.status === "完了").length;
+                        const pct = catTasks.length > 0 ? Math.round((done / catTasks.length) * 100) : 0;
+                        const windowTasks = catTasks.filter(
+                          t => t.status !== "完了" && t.due_date && miniDays.includes(t.due_date)
+                        );
+                        const outsideCount = catTasks.filter(
+                          t => t.status !== "完了" && t.due_date && !miniDays.includes(t.due_date)
+                        ).length;
+                        return (
+                          <div key={cat}>
+                            {/* Category header */}
+                            <div className="flex items-center border-b border-indigo-100/60 bg-indigo-50/50">
+                              <div className="shrink-0 px-3 py-2 border-r border-indigo-100/60 flex items-center justify-between gap-2" style={{ width: LABEL_W }}>
+                                <span className="text-xs font-bold text-indigo-700 truncate">{cat}</span>
+                                <span className="text-[10px] text-indigo-400 tabular-nums shrink-0">{pct}%</span>
+                              </div>
+                              {/* Progress bar spanning timeline */}
+                              <div className="flex-1 px-2 flex items-center" style={{ height: 30 }}>
+                                <div className="flex-1 h-1.5 bg-indigo-100 rounded-full overflow-hidden">
+                                  <div className="h-full bg-indigo-400 rounded-full" style={{ width: `${pct}%` }} />
+                                </div>
+                              </div>
+                            </div>
+                            {/* Task rows */}
+                            {windowTasks.map(task => {
+                              const dayIdx = miniDays.indexOf(task.due_date);
+                              const dot = statusDot[task.status] ?? "bg-gray-400";
+                              const isUrgent = dayIdx <= 1;
+                              return (
+                                <Link key={task.id} href={`/tasks/${task.id}`}>
+                                  <div className="flex items-center border-b border-gray-50 hover:bg-blue-50/20 transition group" style={{ minHeight: 38 }}>
+                                    <div className="shrink-0 px-3 py-2 border-r border-gray-100 flex items-center gap-1.5" style={{ width: LABEL_W }}>
+                                      <span className={`w-2 h-2 rounded-full shrink-0 ${dot}`} />
+                                      <p className={`text-xs flex-1 min-w-0 whitespace-nowrap ${isUrgent ? "text-red-600 font-semibold" : "text-gray-700"}`}>{task.title}</p>
+                                    </div>
+                                    <div className="flex flex-1 relative" style={{ height: 36 }}>
+                                      {/* Background cells */}
+                                      {miniDays.map((day, i) => {
+                                        const d = new Date(day + "T00:00:00");
+                                        const isSun = d.getDay() === 0;
+                                        const isSat = d.getDay() === 6;
+                                        return (
+                                          <div key={day} className={`flex-1 border-r border-gray-50 ${
+                                            i === 0 ? "bg-red-50/30" : isSun ? "bg-red-50/20" : isSat ? "bg-blue-50/20" : ""
+                                          }`} />
+                                        );
+                                      })}
+                                      {/* Today line */}
+                                      <div className="absolute top-0 bottom-0 w-px bg-red-300/50" style={{ left: `${(0.5 / MINI_DAYS) * 100}%` }} />
+                                      {/* Deadline marker */}
+                                      {dayIdx >= 0 && (
+                                        <>
+                                          <div
+                                            className={`absolute top-0 bottom-0 w-0.5 z-10 ${isUrgent ? "bg-red-400" : "bg-indigo-300"}`}
+                                            style={{ left: `${((dayIdx + 0.5) / MINI_DAYS) * 100}%` }}
+                                          />
+                                          <div
+                                            className="absolute top-1/2 -translate-y-1/2 z-20"
+                                            style={{ left: `calc(${((dayIdx + 0.5) / MINI_DAYS) * 100}% + 3px)` }}
+                                          >
+                                            <span className={`text-[9px] font-bold tabular-nums ${isUrgent ? "text-red-500" : "text-indigo-400"}`}>
+                                              {formatMMDD(task.due_date)}
+                                            </span>
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                </Link>
+                              );
+                            })}
+                            {/* Outside window notice */}
+                            {outsideCount > 0 && (
+                              <div className="flex border-b border-gray-50">
+                                <div className="shrink-0 px-3 py-1 border-r border-gray-100" style={{ width: LABEL_W }} />
+                                <div className="flex-1 px-3 py-1">
+                                  <span className="text-[10px] text-gray-400">他 {outsideCount}件（期間外）</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+
+
+            </div>
+          </div>
+          );
+        })()}
+
+        {/* ━━━ タスク一覧タブ ━━━ */}
+        {activeTab === "list" && (
+          <div className="flex-1 flex min-w-0 overflow-hidden">
+
+            {/* Left: Category sidebar */}
+            <div className="w-[260px] shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-hidden">
+              <div className="px-4 py-4 border-b border-gray-100">
+                <h2 className="text-sm font-bold text-gray-800">Myプロジェクト</h2>
+                <p className="text-[11px] text-gray-400 mt-0.5">
+                  {categoryNames.length}カテゴリ · {totalTasks}タスク
+                </p>
+              </div>
+
+              {/* Alert bar */}
+              {(todayTasks.length > 0 || tomorrowTasks.length > 0) && (
+                <div className="px-3 py-2.5 border-b border-red-100 bg-red-50/70">
+                  {todayTasks.length > 0 && (
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">今日</span>
+                      <span className="text-[11px] text-red-700 font-semibold">{todayTasks.length}件が本日期限</span>
+                    </div>
+                  )}
+                  {tomorrowTasks.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <span className="bg-amber-400 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">明日</span>
+                      <span className="text-[11px] text-amber-700 font-semibold">{tomorrowTasks.length}件が明日期限</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex-1 overflow-y-auto p-2.5 space-y-1.5">
+                {categoryNames.map(cat => {
+                  const { tasks: catTasks } = categories[cat];
+                  const done = catTasks.filter(t => t.status === "完了").length;
+                  const doing = catTasks.filter(t => t.status === "進行中").length;
+                  const waiting = catTasks.filter(t => t.status === "確認待ち").length;
+                  const todo = catTasks.filter(t => t.status === "未着手").length;
+                  const pct = catTasks.length > 0 ? Math.round((done / catTasks.length) * 100) : 0;
+                  const isActive = selectedCategory === cat;
+                  const hasAlert = catTasks.some(t => alertTaskIds.has(t.id));
+
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => { setSelectedCategory(cat); setShowCompleted(false); }}
+                      className={`w-full text-left rounded-xl p-3 transition-all duration-150 ${
+                        isActive
+                          ? "bg-blue-600 shadow-md shadow-blue-500/20"
+                          : "bg-white hover:bg-gray-50 border border-gray-100 hover:border-gray-200 hover:shadow-sm"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`text-xs font-bold truncate flex-1 ${isActive ? "text-white" : "text-gray-700"}`}>{cat}</span>
+                        {hasAlert && <span className={`w-2 h-2 rounded-full shrink-0 ${isActive ? "bg-red-300" : "bg-red-500"}`} />}
+                      </div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className={`flex-1 h-1.5 rounded-full overflow-hidden ${isActive ? "bg-blue-500/40" : "bg-gray-100"}`}>
+                          <div className={`h-full rounded-full ${isActive ? "bg-white" : "bg-emerald-500"}`} style={{ width: `${pct}%` }} />
+                        </div>
+                        <span className={`text-[9px] tabular-nums font-semibold ${isActive ? "text-blue-100" : "text-gray-500"}`}>{pct}%</span>
+                      </div>
+                      <div className="flex gap-1 flex-wrap">
+                        {done > 0 && <span className={`flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-semibold ${isActive ? "bg-white/20 text-white" : "bg-emerald-50 text-emerald-700"}`}><span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-white" : "bg-emerald-500"}`} />{done}完了</span>}
+                        {doing > 0 && <span className={`flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-semibold ${isActive ? "bg-white/20 text-white" : "bg-blue-50 text-blue-700"}`}><span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-white" : "bg-blue-500"}`} />{doing}進行中</span>}
+                        {waiting > 0 && <span className={`flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-semibold ${isActive ? "bg-white/20 text-white" : "bg-yellow-50 text-yellow-700"}`}><span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-white" : "bg-yellow-500"}`} />{waiting}確認待</span>}
+                        {todo > 0 && <span className={`flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded font-semibold ${isActive ? "bg-white/20 text-white" : "bg-gray-50 text-gray-500"}`}><span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-white/60" : "bg-gray-300"}`} />{todo}未着手</span>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Right: Task list */}
+            <div className="flex-1 min-w-0 flex flex-col overflow-hidden" style={{ backgroundColor: "#f0f5ff" }}>
+              <div className="px-6 py-4 border-b border-gray-200 bg-white flex items-center justify-between shrink-0">
+                <div>
+                  <h2 className="text-sm font-bold text-gray-800">{selectedCategory ?? "すべてのタスク"}</h2>
+                  <p className="text-[11px] text-gray-400 mt-0.5">
+                    {shownTasks.length}タスク表示中
+                  </p>
+                </div>
+                {completedCount > 0 && (
+                  <button
+                    onClick={() => setShowCompleted(v => !v)}
+                    className={`flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 rounded-lg border transition-all ${
+                      showCompleted
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
+                        : "bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100"
+                    }`}
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    完了 {completedCount}件{showCompleted ? "を隠す" : "を表示"}
+                  </button>
+                )}
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-6">
+                {/* 今日やること */}
+                {todayTasks.length > 0 && (
+                  <div className="max-w-[680px] mb-7">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                      <h3 className="text-xs font-bold text-gray-700 tracking-wide">今日やること</h3>
+                      <span className="text-[10px] text-red-600 font-bold bg-red-50 border border-red-100 px-2 py-0.5 rounded-full">{todayTasks.length}件</span>
+                    </div>
+                    <div className="space-y-2">
+                      {todayTasks.map(task => {
+                        const st = STATUS_CONFIG[task.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG["未着手"];
+                        return (
+                          <Link key={task.id} href={`/tasks/${task.id}`}>
+                            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white border-2 border-red-200 hover:border-red-300 hover:shadow-md hover:shadow-red-500/10 transition-all" style={{ minHeight: 52 }}>
+                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md shrink-0 ${st.badge}`}>{st.label}</span>
+                              <span className="text-[13px] flex-1 min-w-0 truncate text-gray-900 font-semibold">{task.title}</span>
+                              <span className="text-[10px] font-bold text-white bg-red-500 px-2 py-0.5 rounded-full shrink-0">今日期限</span>
+                              <svg className="w-4 h-4 text-gray-300 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-5 flex items-center gap-3">
+                      <div className="flex-1 h-px bg-gray-200" />
+                      <span className="text-[10px] text-gray-400 font-medium">すべてのタスク</span>
+                      <div className="flex-1 h-px bg-gray-200" />
+                    </div>
+                  </div>
+                )}
+
+                <div className="max-w-[680px] space-y-2">
+                  {shownTasks.map(task => {
+                    const st = STATUS_CONFIG[task.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG["未着手"];
+                    const isAlert = alertTaskIds.has(task.id);
+                    const isOverdue = task.due_date && task.due_date < today && task.status !== "完了";
+                    const diff = task.due_date
+                      ? Math.round((new Date(task.due_date + "T00:00:00").getTime() - new Date(today + "T00:00:00").getTime()) / 86400000)
+                      : null;
+                    let hint: string | null = null;
+                    if (task.playbook_criteria) {
+                      try {
+                        const crit = JSON.parse(task.playbook_criteria);
+                        if (Array.isArray(crit) && crit.length > 0) hint = crit[0].a;
+                      } catch { /* ignore */ }
+                    }
+                    const { pitfalls, conditions } = getPlaybookCounts(task);
+                    const accentColor =
+                      task.status === "完了"    ? "#10b981" :
+                      task.status === "進行中"  ? "#3b82f6" :
+                      task.status === "確認待ち"? "#f59e0b" :
+                      isOverdue               ? "#ef4444" : "#d1d5db";
+
+                    return (
+                      <Link key={task.id} href={`/tasks/${task.id}`}>
+                        <div
+                          className={`flex items-start gap-3 pl-0 pr-4 py-0 rounded-xl transition-all bg-white border group overflow-hidden ${
+                            isAlert
+                              ? "border-red-200 hover:border-red-300 hover:shadow-md hover:shadow-red-500/10"
+                              : task.status === "完了"
+                              ? "border-gray-100 hover:border-gray-200"
+                              : "border-gray-100 hover:border-blue-200 hover:shadow-md hover:shadow-blue-500/10"
+                          }`}
+                        >
+                          {/* Left accent bar */}
+                          <div className="w-1 self-stretch shrink-0 rounded-l-xl" style={{ backgroundColor: accentColor }} />
+
+                          {/* Content */}
+                          <div className="flex-1 min-w-0 py-3">
+                            <div className="flex items-center gap-2">
+                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md shrink-0 ${st.badge}`}>{st.label}</span>
+                              <span className={`text-[13px] flex-1 min-w-0 truncate font-medium ${
+                                task.status === "完了" ? "line-through text-gray-400"
+                                : isOverdue ? "text-red-600 font-semibold"
+                                : "text-gray-800"
+                              }`}>{task.title}</span>
+                              {task.status !== "完了" && (pitfalls > 0 || conditions > 0) && (
+                                <div className="flex items-center gap-1 shrink-0">
+                                  {pitfalls > 0 && <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-red-50 text-red-500 border border-red-100">⚠️{pitfalls}</span>}
+                                  {conditions > 0 && <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-emerald-50 text-emerald-600 border border-emerald-100">✅{conditions}</span>}
+                                </div>
+                              )}
+                            </div>
+                            {hint && task.status !== "完了" && (
+                              <p className="text-[11px] text-indigo-500 mt-1.5 flex items-start gap-1">
+                                <span className="shrink-0">💡</span>
+                                <span className="line-clamp-1">{hint}</span>
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Right: date + countdown */}
+                          <div className="shrink-0 flex flex-col items-end justify-center gap-0.5 py-3 min-w-[72px]">
+                            {isAlert && (
+                              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full text-white ${
+                                todayTasks.some(t => t.id === task.id) ? "bg-red-500" : "bg-amber-400"
+                              }`}>
+                                {todayTasks.some(t => t.id === task.id) ? "今日" : "明日"}
+                              </span>
+                            )}
+                            {task.due_date && task.status !== "完了" && (
+                              <span className={`text-[11px] tabular-nums font-medium ${isOverdue ? "text-red-400" : "text-gray-400"}`}>
+                                {formatDate(task.due_date)}
+                              </span>
+                            )}
+                            {diff !== null && task.status !== "完了" && !isAlert && (
+                              <span className={`text-[10px] tabular-nums font-bold ${
+                                isOverdue ? "text-red-400" : diff <= 7 ? "text-orange-400" : "text-gray-300"
+                              }`}>
+                                {isOverdue ? `${Math.abs(diff)}日超過` : `あと${diff}日`}
+                              </span>
+                            )}
+                          </div>
+
+                          <svg className="w-4 h-4 text-gray-200 shrink-0 group-hover:text-blue-300 transition-colors self-center" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      </Link>
+                    );
+                  })}
+
+                  {shownTasks.length === 0 && (
+                    <div className="text-center py-20">
+                      <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                        <svg className="w-8 h-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                      </div>
+                      <p className="text-sm text-gray-500 font-medium">担当タスクはありません</p>
+                      <p className="text-xs text-gray-400 mt-1">このカテゴリのタスクは完了しています</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ━━━ スケジュールタブ（個人ガント） ━━━ */}
+        {activeTab === "gantt" && (
+          <div className="flex-1 overflow-hidden p-6" style={{ backgroundColor: "#f0f5ff" }}>
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm h-full flex flex-col overflow-hidden">
+              <div className="px-4 py-3 border-b border-gray-100 flex items-center gap-2 shrink-0">
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                <h2 className="text-sm font-bold text-gray-800">担当タスク スケジュール</h2>
+                <span className="ml-auto text-[10px] text-gray-400">{activeTasks.length}件のアクティブタスク</span>
+              </div>
+              <div className="flex-1 overflow-auto">
+                <div style={{ minWidth: `${LEFT_W + DAYS * CELL}px` }}>
+
+                  {/* Month header */}
+                  <div className="flex border-b border-gray-100 bg-white sticky top-0 z-20">
+                    <div className="shrink-0 border-r-2 border-gray-200 px-4 flex items-end pb-1.5 bg-white sticky left-0 z-30" style={{ width: LEFT_W }}>
+                      <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">タスク</span>
+                    </div>
+                    <div className="flex">
+                      {monthGroups.map(mg => (
+                        <div key={mg.label} style={{ width: mg.count * CELL }} className="shrink-0 border-r border-gray-100 px-2 pt-1.5 pb-0.5">
+                          <span className="text-[11px] font-bold text-gray-500">{mg.label}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Day numbers */}
+                  <div className="flex border-b-2 border-gray-200 bg-white sticky top-[28px] z-20">
+                    <div className="shrink-0 border-r-2 border-gray-200 bg-white sticky left-0 z-30" style={{ width: LEFT_W }} />
+                    <div className="flex">
+                      {days.map(day => {
+                        const isToday = day === today;
+                        const isAnn = day === ANNOUNCEMENT_DATE;
+                        const isVote = day === VOTE_DATE;
+                        const d = new Date(day + "T00:00:00");
+                        const isSun = d.getDay() === 0;
+                        const isSat = d.getDay() === 6;
+                        return (
+                          <div key={day} style={{ width: CELL }}
+                            className={`shrink-0 flex items-center justify-center py-1.5 border-r border-gray-100 ${
+                              isAnn ? "bg-orange-50" : isVote ? "bg-red-50" : isSun || isSat ? "bg-gray-50" : ""
+                            }`}>
+                            {isToday ? (
+                              <span className="w-7 h-7 rounded-full bg-red-500 text-white text-sm font-bold flex items-center justify-center">{d.getDate()}</span>
+                            ) : isAnn ? (
+                              <div className="flex flex-col items-center">
+                                <span className="text-[8px] font-bold text-orange-600 leading-none">告示</span>
+                                <span className="text-sm font-bold text-orange-500">{d.getDate()}</span>
+                              </div>
+                            ) : isVote ? (
+                              <div className="flex flex-col items-center">
+                                <span className="text-[8px] font-bold text-red-600 leading-none">投票</span>
+                                <span className="text-sm font-bold text-red-500">{d.getDate()}</span>
+                              </div>
+                            ) : (
+                              <span className={`text-sm font-medium ${isSun ? "text-red-400" : isSat ? "text-blue-400" : "text-gray-500"}`}>
+                                {d.getDate()}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Task rows — grouped by category */}
+                  {activeTasks.length === 0 ? (
+                    <div className="py-16 text-center text-gray-400 text-sm">アクティブなタスクはありません</div>
+                  ) : categoryNames.map(cat => {
+                    const catActiveTasks = activeTasks.filter(t => t.category === cat);
+                    if (catActiveTasks.length === 0) return null;
+                    const catAll = categories[cat].tasks;
+                    const done = catAll.filter(t => t.status === "完了").length;
+                    const pct = catAll.length > 0 ? Math.round((done / catAll.length) * 100) : 0;
+                    return (
+                      <div key={cat}>
+                        {/* Category header row */}
+                        <div className="flex border-b-2 border-indigo-100 bg-indigo-50/60 sticky top-[56px] z-10">
+                          <div className="shrink-0 border-r-2 border-gray-200 px-3 py-2 flex items-center gap-2 bg-indigo-50 sticky left-0 z-20" style={{ width: LEFT_W }}>
+                            <span className="text-xs font-bold text-indigo-700 truncate flex-1">{cat}</span>
+                            <span className="text-[10px] text-indigo-500 font-semibold tabular-nums shrink-0">{pct}%</span>
+                          </div>
+                          <div className="flex-1 relative" style={{ minHeight: 32 }}>
+                            {days.map((day, i) => {
+                              const d = new Date(day + "T00:00:00");
+                              const isSun = d.getDay() === 0; const isSat = d.getDay() === 6;
+                              return (
+                                <div key={day} style={{ width: CELL, position: "absolute", top: 0, bottom: 0, left: i * CELL }}
+                                  className={`border-r border-indigo-100/60 ${day === today ? "bg-red-50/30" : isSun || isSat ? "bg-indigo-50/30" : ""}`} />
+                              );
+                            })}
+                            {todayIdx >= 0 && <div className="absolute top-0 bottom-0 w-0.5 bg-red-400 z-10 opacity-40" style={{ left: todayIdx * CELL + CELL / 2 }} />}
+                            {/* Progress bar overlay */}
+                            <div className="absolute bottom-0 left-0 right-0 h-1">
+                              <div className="h-full bg-indigo-300/60" style={{ width: `${pct}%` }} />
+                            </div>
+                          </div>
+                        </div>
+                        {/* Tasks in this category */}
+                        {catActiveTasks.map(task => {
+                          const dayDiff = getDayDiff(task.due_date, days[0]);
+                          const inRange = dayDiff >= 0 && dayDiff < DAYS;
+                          const badge = GANTT_BADGE[task.status] ?? GANTT_BADGE["未着手"];
+                          const isOverdue = getDayDiff(task.due_date, today) < 0;
+                          const BADGE_W = 120;
+                          const badgeLeft = inRange
+                            ? Math.max(0, Math.min(dayDiff * CELL + CELL / 2 - BADGE_W / 2, DAYS * CELL - BADGE_W))
+                            : null;
+                          return (
+                            <Link key={task.id} href={`/tasks/${task.id}`}>
+                              <div className="flex border-b border-gray-50 hover:bg-blue-50/20 transition group cursor-pointer">
+                                <div className="shrink-0 border-r-2 border-gray-200 px-3 py-2 flex items-center gap-2 bg-white sticky left-0 z-10 group-hover:bg-blue-50/20 pl-6" style={{ width: LEFT_W }}>
+                                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{
+                                    backgroundColor: task.status === "進行中" ? "#3b82f6" : task.status === "確認待ち" ? "#f59e0b" : "#9ca3af"
+                                  }} />
+                                  <p className={`text-sm truncate ${isOverdue ? "text-red-600 font-semibold" : "text-gray-800"}`}>{task.title}</p>
+                                </div>
+                                <div className="flex-1 relative" style={{ minHeight: 44 }}>
+                                  {days.map((day, i) => {
+                                    const isAnn = day === ANNOUNCEMENT_DATE;
+                                    const isVote = day === VOTE_DATE;
+                                    const d = new Date(day + "T00:00:00");
+                                    const isSun = d.getDay() === 0; const isSat = d.getDay() === 6;
+                                    return (
+                                      <div key={day} style={{ width: CELL, position: "absolute", top: 0, bottom: 0, left: i * CELL }}
+                                        className={`border-r border-gray-50 ${isAnn ? "bg-orange-50/40" : isVote ? "bg-red-50/40" : day === today ? "bg-red-50/20" : isSun || isSat ? "bg-gray-50/30" : ""}`} />
+                                    );
+                                  })}
+                                  {todayIdx >= 0 && <div className="absolute top-0 bottom-0 w-0.5 bg-red-400 z-10 opacity-50" style={{ left: todayIdx * CELL + CELL / 2 }} />}
+                                  {announcementIdx >= 0 && <div className="absolute top-0 bottom-0 w-0.5 bg-orange-400 z-10 opacity-60" style={{ left: announcementIdx * CELL + CELL / 2 }} />}
+                                  {voteIdx >= 0 && <div className="absolute top-0 bottom-0 w-0.5 bg-red-500 z-10 opacity-70" style={{ left: voteIdx * CELL + CELL / 2 }} />}
+                                  {inRange && badgeLeft !== null && (
+                                    <div className={`absolute top-1/2 -translate-y-1/2 z-20 flex items-center gap-1.5 rounded-lg px-2 py-1 ${badge.bg} border ${badge.border} shadow-sm`}
+                                      style={{ left: badgeLeft, width: BADGE_W }}>
+                                      <span className={`w-2 h-2 rounded-full shrink-0 ${badge.dot}`} />
+                                      <span className={`text-[11px] font-bold truncate flex-1 ${badge.text}`}>{task.status}</span>
+                                      <span className="text-[11px] text-gray-500 shrink-0 tabular-nums font-medium">{formatMMDD(task.due_date)}</span>
+                                    </div>
+                                  )}
+                                  {!inRange && (
+                                    <div className="absolute top-1/2 -translate-y-1/2 text-[10px] text-gray-300 px-2"
+                                      style={{ left: dayDiff < 0 ? 4 : "auto", right: dayDiff >= DAYS ? 4 : "auto" }}>
+                                      {dayDiff < 0 ? `← ${formatMMDD(task.due_date)}` : `${formatMMDD(task.due_date)} →`}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </Link>
+                          );
+                        })}
+                      </div>
+                    );
+                  })}
+
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ━━━ ロードマップタブ ━━━ */}
+        {activeTab === "roadmap" && (() => {
+          const announceDate = new Date(ANNOUNCEMENT_DATE + "T00:00:00");
+          const voteDate     = new Date(VOTE_DATE + "T00:00:00");
+          const todayDate    = new Date(today + "T00:00:00");
+
+          const daysToAnnounce = Math.round((announceDate.getTime() - todayDate.getTime()) / 86400000);
+          const daysToVote     = Math.round((voteDate.getTime()     - todayDate.getTime()) / 86400000);
+
+          // タイムラインバー: 開始=告示7日前, 終了=投票日
+          const timelineStart = new Date(announceDate);
+          timelineStart.setDate(timelineStart.getDate() - 7);
+          const spanMs      = voteDate.getTime() - timelineStart.getTime();
+          const todayPct    = ((todayDate.getTime()   - timelineStart.getTime()) / spanMs) * 100;
+          const announcePct = ((announceDate.getTime() - timelineStart.getTime()) / spanMs) * 100;
+
+          // フェーズ定義: due_date で判定
+          const phases = [
+            {
+              id: "pre",
+              label: "告示前",
+              sublabel: `〜${formatMMDD(ANNOUNCEMENT_DATE)}前日`,
+              icon: "📋",
+              milestone: `告示日 ${formatMMDD(ANNOUNCEMENT_DATE)}`,
+              hdr: "bg-blue-600",
+              bar: "bg-blue-500",
+              ring: "ring-blue-200",
+              bg: "bg-blue-50",
+              badge: "bg-blue-100 text-blue-700",
+              tasks: allTasks.filter(t => t.due_date && t.due_date < ANNOUNCEMENT_DATE),
+            },
+            {
+              id: "announce",
+              label: "告示日",
+              sublabel: formatMMDD(ANNOUNCEMENT_DATE),
+              icon: "📢",
+              milestone: "告示完了",
+              hdr: "bg-amber-600",
+              bar: "bg-amber-500",
+              ring: "ring-amber-200",
+              bg: "bg-amber-50",
+              badge: "bg-amber-100 text-amber-700",
+              tasks: allTasks.filter(t => t.due_date && t.due_date === ANNOUNCEMENT_DATE),
+            },
+            {
+              id: "period",
+              label: "選挙期間",
+              sublabel: `${formatMMDD(ANNOUNCEMENT_DATE)}〜${formatMMDD(VOTE_DATE)}`,
+              icon: "🗳️",
+              milestone: `投票日 ${formatMMDD(VOTE_DATE)}`,
+              hdr: "bg-purple-600",
+              bar: "bg-purple-500",
+              ring: "ring-purple-200",
+              bg: "bg-purple-50",
+              badge: "bg-purple-100 text-purple-700",
+              tasks: allTasks.filter(t => t.due_date && t.due_date > ANNOUNCEMENT_DATE && t.due_date < VOTE_DATE),
+            },
+            {
+              id: "vote",
+              label: "投票日前日・当日",
+              sublabel: `投票日前日〜当日`,
+              icon: "📊",
+              milestone: "開票完了",
+              hdr: "bg-emerald-600",
+              bar: "bg-emerald-500",
+              ring: "ring-emerald-200",
+              bg: "bg-emerald-50",
+              badge: "bg-emerald-100 text-emerald-700",
+              tasks: allTasks.filter(t => t.due_date && t.due_date >= VOTE_DATE),
+            },
+          ];
+
+          const totalAll   = allTasks.length;
+          const doneAll    = allTasks.filter(t => t.status === "完了").length;
+          const overallPct = totalAll > 0 ? Math.round((doneAll / totalAll) * 100) : 0;
+
+          return (
+            <div className="flex-1 overflow-y-auto" style={{ backgroundColor: "#f0f5ff" }}>
+              <div className="px-6 py-5 max-w-[1080px] mx-auto">
+
+                {/* ── タイムラインヘッダー ── */}
+                <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-2xl p-5 mb-6 text-white">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h2 className="font-bold text-base">選挙ロードマップ</h2>
+                      <p className="text-slate-400 text-xs mt-0.5">全タスク {totalAll} 件 — 全体 {overallPct}% 完了</p>
+                    </div>
+                    <div className="flex gap-4 text-center">
+                      <div>
+                        <p className="text-[10px] text-slate-400">告示まで</p>
+                        <p className={`text-xl font-extrabold tabular-nums ${daysToAnnounce <= 0 ? "text-slate-400" : "text-orange-400"}`}>
+                          {daysToAnnounce <= 0 ? "告示済" : `${daysToAnnounce}日`}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-slate-400">投票日まで</p>
+                        <p className={`text-xl font-extrabold tabular-nums ${daysToVote <= 0 ? "text-slate-400" : "text-white"}`}>
+                          {daysToVote <= 0 ? "終了" : `${daysToVote}日`}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* プロジェクト別進捗 */}
+                  <div className="mt-4 space-y-2">
+                    {Array.from(new Set(tasks.map(t => t.category))).map(cat => {
+                      const catTasks = tasks.filter(t => t.category === cat);
+                      const done = catTasks.filter(t => t.status === "完了").length;
+                      const pct = catTasks.length > 0 ? Math.round(done / catTasks.length * 100) : 0;
+                      const hasOverdue = catTasks.some(t => t.status !== "完了" && t.due_date < today);
+                      return (
+                        <div key={cat} className="flex items-center gap-3">
+                          <span className="text-[11px] text-slate-300 w-28 shrink-0 truncate">{cat}</span>
+                          <div className="flex-1 h-1.5 bg-slate-600 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full rounded-full transition-all ${pct === 100 ? "bg-emerald-400" : hasOverdue ? "bg-red-400" : "bg-blue-400"}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="text-[11px] text-slate-400 w-10 text-right tabular-nums shrink-0">{done}/{catTasks.length}</span>
+                          <span className={`text-[11px] w-8 text-right tabular-nums font-bold shrink-0 ${pct === 100 ? "text-emerald-400" : hasOverdue ? "text-red-400" : "text-slate-300"}`}>{pct}%</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* ── フェーズカラム ── */}
+                <div className="grid grid-cols-4 gap-4">
+                  {phases.map(phase => {
+                    const byCategory: Record<string, Task[]> = {};
+                    phase.tasks.forEach(t => {
+                      if (!byCategory[t.category]) byCategory[t.category] = [];
+                      byCategory[t.category].push(t);
+                    });
+                    const catNames = Object.keys(byCategory);
+                    const phaseTotal   = phase.tasks.length;
+                    const phaseDone    = phase.tasks.filter(t => t.status === "完了").length;
+                    const phasePct     = phaseTotal > 0 ? Math.round((phaseDone / phaseTotal) * 100) : 0;
+                    const phaseCleared = phaseTotal > 0 && phaseDone === phaseTotal;
+
+                    return (
+                      <div key={phase.id} className={`rounded-2xl overflow-hidden shadow-sm ring-1 ${phase.ring}`}>
+                        {/* フェーズヘッダー */}
+                        <div className={`${phase.hdr} text-white px-4 py-3`}>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xl">{phase.icon}</span>
+                              <div>
+                                <p className="font-bold text-sm leading-tight">{phase.label}</p>
+                                <p className="text-[10px] text-white/70">{phase.sublabel}</p>
+                              </div>
+                            </div>
+                            {phaseCleared ? (
+                              <span className="bg-white/25 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                                ✅ クリア
+                              </span>
+                            ) : (
+                              <span className="text-white/80 text-sm font-bold tabular-nums">{phasePct}%</span>
+                            )}
+                          </div>
+                          {/* フェーズ進捗バー */}
+                          <div className="mt-2 h-1.5 bg-white/20 rounded-full overflow-hidden">
+                            <div className="h-full bg-white/70 rounded-full transition-all" style={{ width: `${phasePct}%` }} />
+                          </div>
+                        </div>
+
+                        {/* カテゴリリスト */}
+                        <div className={`${phase.bg} p-3 space-y-2`}>
+                          {catNames.length === 0 && (
+                            <p className="text-xs text-gray-400 text-center py-3">このフェーズにタスクなし</p>
+                          )}
+                          {catNames.map(cat => {
+                            const catTasks = byCategory[cat];
+                            const done     = catTasks.filter(t => t.status === "完了").length;
+                            const inProg   = catTasks.filter(t => t.status === "進行中").length;
+                            const total    = catTasks.length;
+                            const pct      = Math.round((done / total) * 100);
+                            const cleared  = done === total;
+
+                            return (
+                              <div key={cat} className="bg-white rounded-xl px-3 py-2.5 shadow-sm">
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <span className="text-xs font-semibold text-gray-700 truncate flex-1">{cat}</span>
+                                  {cleared ? (
+                                    <span className="text-[9px] bg-emerald-100 text-emerald-700 font-bold px-1.5 py-0.5 rounded-full ml-2 shrink-0">
+                                      ✅ クリア
+                                    </span>
+                                  ) : inProg > 0 ? (
+                                    <span className="text-[9px] bg-blue-50 text-blue-600 font-bold px-1.5 py-0.5 rounded-full ml-2 shrink-0">
+                                      進行中 {inProg}
+                                    </span>
+                                  ) : (
+                                    <span className="text-[9px] text-gray-400 ml-2 shrink-0 tabular-nums">{done}/{total}</span>
+                                  )}
+                                </div>
+                                <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all ${cleared ? "bg-emerald-500" : phase.bar}`}
+                                    style={{ width: `${pct}%` }}
+                                  />
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* マイルストーン */}
+                        <div className="bg-white border-t border-gray-100 px-4 py-2 flex items-center gap-1.5">
+                          <span className="text-[10px] text-gray-400">ゴール:</span>
+                          <span className="text-[10px] font-semibold text-gray-600">{phase.milestone}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+              </div>
+            </div>
+          );
+        })()}
+
+      </div>
+    </AppShell>
+  );
+}

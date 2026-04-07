@@ -1,0 +1,339 @@
+<!--
+  aesthetic_dna: B2G Enterprise / Command Center Dashboard
+  ui_paradigm: Multi-dimensional Bento Workspace with Fixed Sidebar Navigation
+  palette_choice: Deep Navy (#0f172a) anchor, Slate-50 canvas, High-fidelity status semantic accents (Emerald, Amber, Blue, Slate)
+  generated_by: AIDesigner MCP run_id: ea101bab-34fd-4b43-b82e-9ef104c52e5b
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniGuide - Election Management Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
+                    colors: { brand: { navy: '#0f172a', blue: '#2563eb', light: '#f8fafc' } },
+                    boxShadow: {
+                        'b2b': '0 4px 20px -4px rgba(15, 23, 42, 0.05), 0 0 1px rgba(15, 23, 42, 0.08)',
+                        'b2b-hover': '0 10px 25px -5px rgba(15, 23, 42, 0.08), 0 0 1px rgba(15, 23, 42, 0.12)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        @keyframes fillRing {
+            from { stroke-dasharray: 0, 100; }
+            to { stroke-dasharray: 78, 100; }
+        }
+        .progress-ring-circle { animation: fillRing 1.5s ease-out forwards; }
+        .task-row { transition: all 0.2s ease; }
+        .task-row:hover { transform: translateX(4px); background-color: #f8fafc; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 flex h-screen overflow-hidden antialiased selection:bg-blue-100 selection:text-blue-900">
+
+    <!-- Sidebar -->
+    <aside class="w-[280px] bg-[#0f172a] flex flex-col justify-between flex-shrink-0 h-full border-r border-slate-800/50 shadow-2xl z-20 relative">
+        <div>
+            <div class="h-20 flex items-center px-6 border-b border-slate-800/60">
+                <div class="flex items-center gap-3 w-full">
+                    <div class="inline-block bg-white/90 rounded-xl px-3 py-2">
+                        <img src="../public/logo.png" alt="UniPoll" style="height:32px; width:auto;">
+                    </div>
+                    <span class="ml-auto text-[10px] font-bold tracking-wider uppercase text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">Beta</span>
+                </div>
+            </div>
+            <div class="px-4 py-8 space-y-1">
+                <p class="px-3 text-xs font-semibold text-slate-500 uppercase tracking-widest mb-3">メニュー</p>
+                <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-600/10 text-blue-400 font-semibold border border-blue-500/20 group transition-colors">
+                    <i class="ph ph-squares-four text-xl"></i>
+                    ダッシュボード
+                    <div class="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.8)]"></div>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 font-medium transition-colors group">
+                    <i class="ph ph-check-square-offset text-xl group-hover:text-emerald-400 transition-colors"></i>
+                    タスク一覧
+                    <span class="ml-auto bg-slate-800 text-slate-300 text-[10px] py-0.5 px-2 rounded-full">12</span>
+                </a>
+                <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 font-medium transition-colors group">
+                    <i class="ph ph-files text-xl group-hover:text-blue-400 transition-colors"></i>
+                    マニュアル
+                </a>
+                <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 font-medium transition-colors group">
+                    <i class="ph ph-phone text-xl group-hover:text-purple-400 transition-colors"></i>
+                    受電記録
+                </a>
+                <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/50 font-medium transition-colors group">
+                    <i class="ph ph-map-pin text-xl group-hover:text-pink-400 transition-colors"></i>
+                    投票所マップ
+                </a>
+            </div>
+        </div>
+        <div class="p-4 border-t border-slate-800/60 bg-slate-900/50">
+            <button class="w-full flex items-center gap-3 p-2 rounded-md hover:bg-slate-800 transition-colors text-left">
+                <div class="w-9 h-9 rounded bg-gradient-to-br from-slate-600 to-slate-700 flex items-center justify-center border border-slate-600">
+                    <i class="ph ph-user text-white text-lg"></i>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <p class="text-sm font-semibold text-white truncate">○○市選挙管理委員会</p>
+                    <p class="text-[11px] text-slate-400 truncate">職員A（入場整理券担当）</p>
+                </div>
+                <i class="ph ph-caret-up text-slate-500"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full z-10 w-full min-w-0 overflow-y-auto">
+        <header class="h-20 bg-white/80 backdrop-blur-md border-b border-slate-200/80 sticky top-0 z-30 flex items-center justify-between px-8 shadow-sm">
+            <div class="flex flex-col">
+                <h1 class="text-xl font-bold text-slate-900 leading-tight">ダッシュボード</h1>
+                <div class="flex items-center gap-2 text-sm text-slate-500">
+                    <span>令和8年 ○○市議会議員選挙</span>
+                    <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                    <span class="text-indigo-600 font-medium flex items-center gap-1"><i class="ph-fill ph-circle text-[8px]"></i> 準備中</span>
+                </div>
+            </div>
+            <div class="flex items-center gap-5">
+                <div class="relative group hidden md:block">
+                    <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" placeholder="タスクを検索..." class="pl-9 pr-4 py-2 w-56 bg-slate-100 border-transparent rounded-lg text-sm focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all outline-none">
+                </div>
+                <div class="w-px h-6 bg-slate-200"></div>
+                <button class="relative text-slate-500 hover:text-slate-800 transition-colors">
+                    <i class="ph ph-bell text-2xl"></i>
+                    <span class="absolute top-0.5 right-0.5 w-2.5 h-2.5 bg-red-500 border-2 border-white rounded-full"></span>
+                </button>
+            </div>
+        </header>
+
+        <div class="p-8 max-w-[1400px] w-full mx-auto flex flex-col gap-6">
+
+            <!-- Row 1: カウントダウン + 進捗 -->
+            <div class="grid grid-cols-12 gap-6">
+
+                <!-- カウントダウン -->
+                <div class="col-span-4 bg-white rounded-2xl p-6 shadow-b2b border border-slate-200/60 relative overflow-hidden flex flex-col justify-between group">
+                    <div class="absolute -right-12 -top-12 w-40 h-40 bg-gradient-to-br from-blue-50 to-indigo-50/50 rounded-full blur-2xl z-0"></div>
+                    <div class="relative z-10 flex justify-between items-start mb-6">
+                        <div class="flex items-center gap-2">
+                            <div class="p-1.5 bg-blue-100 text-blue-600 rounded-md"><i class="ph ph-hourglass-high text-lg"></i></div>
+                            <h2 class="font-bold text-slate-800">選挙カウントダウン</h2>
+                        </div>
+                    </div>
+                    <div class="relative z-10 flex flex-col gap-5">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                            <div>
+                                <p class="text-xs font-bold text-slate-500 uppercase tracking-wide">告示日</p>
+                                <p class="text-sm text-slate-600 font-medium mt-0.5">2026年5月4日（月）</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-3xl font-extrabold text-slate-800 tracking-tighter">12</div>
+                                <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-widest">日前</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-bold text-indigo-500 uppercase tracking-wide">投票日</p>
+                                <p class="text-sm text-slate-600 font-medium mt-0.5">2026年5月11日（日）</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 tracking-tighter">19</div>
+                                <p class="text-[10px] font-semibold text-blue-400 uppercase tracking-widest">日前</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 準備進捗 -->
+                <div class="col-span-8 bg-white rounded-2xl p-6 shadow-b2b border border-slate-200/60 flex flex-col justify-between">
+                    <div class="flex justify-between items-center mb-6">
+                        <div>
+                            <h2 class="font-bold text-slate-800 text-lg">準備進捗</h2>
+                            <p class="text-sm text-slate-500">全タスクの完了状況</p>
+                        </div>
+                        <a href="#" class="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">詳細を見る <i class="ph ph-arrow-right"></i></a>
+                    </div>
+                    <div class="flex items-center gap-10">
+                        <div class="relative flex items-center justify-center shrink-0">
+                            <svg class="w-32 h-32 transform -rotate-90">
+                                <circle cx="64" cy="64" r="56" stroke="#f1f5f9" stroke-width="12" fill="none" />
+                                <circle cx="64" cy="64" r="56" stroke="url(#blue-gradient)" stroke-width="12" fill="none"
+                                        stroke-linecap="round" class="progress-ring-circle"
+                                        stroke-dasharray="0, 100" pathLength="100" />
+                                <defs>
+                                    <linearGradient id="blue-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                        <stop offset="0%" stop-color="#3b82f6" />
+                                        <stop offset="100%" stop-color="#4f46e5" />
+                                    </linearGradient>
+                                </defs>
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                <span class="text-3xl font-extrabold text-slate-800 tracking-tight">78<span class="text-lg text-slate-400">%</span></span>
+                                <span class="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">順調</span>
+                            </div>
+                        </div>
+                        <div class="flex-1 grid grid-cols-2 gap-x-8 gap-y-4">
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">完了タスク</p>
+                                <div class="flex items-end gap-2">
+                                    <span class="text-2xl font-bold text-slate-800">18</span>
+                                    <span class="text-sm font-medium text-slate-500 mb-0.5">/ 23件</span>
+                                </div>
+                                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-2"><div class="bg-emerald-400 h-1.5 rounded-full" style="width: 78%"></div></div>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">期限切れ</p>
+                                <div class="flex items-end gap-2">
+                                    <span class="text-2xl font-bold text-red-600">2</span>
+                                    <span class="text-sm font-medium text-slate-500 mb-0.5">件</span>
+                                </div>
+                                <div class="w-full bg-slate-100 h-1.5 rounded-full mt-2"><div class="bg-red-400 h-1.5 rounded-full" style="width: 8%"></div></div>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">進行中</p>
+                                <div class="flex items-end gap-2">
+                                    <span class="text-2xl font-bold text-blue-600">3</span>
+                                    <span class="text-sm font-medium text-slate-500 mb-0.5">件</span>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">今日の期限</p>
+                                <div class="flex items-end gap-2">
+                                    <span class="text-2xl font-bold text-amber-600">4</span>
+                                    <span class="text-sm font-medium text-slate-500 mb-0.5">件</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 2: タスクリスト + アクティビティ -->
+            <div class="grid grid-cols-12 gap-6 pb-8">
+
+                <!-- タスクリスト -->
+                <div class="col-span-8 bg-white rounded-2xl shadow-b2b border border-slate-200/60 overflow-hidden flex flex-col">
+                    <div class="p-6 border-b border-slate-100 flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <i class="ph ph-list-checks text-2xl text-slate-400"></i>
+                            <div>
+                                <h2 class="font-bold text-slate-800 text-lg">今日のタスク</h2>
+                                <p class="text-sm text-slate-500">要対応・期限間近のタスク</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2 bg-slate-50 p-1 rounded-lg border border-slate-200/60">
+                            <button class="px-3 py-1.5 text-sm font-semibold bg-white text-slate-800 rounded shadow-sm border border-slate-200/50">すべて</button>
+                            <button class="px-3 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-800 transition">自分のみ</button>
+                        </div>
+                    </div>
+                    <div class="flex-1 overflow-y-auto p-2 bg-slate-50/50">
+
+                        <!-- 入場整理券カテゴリ -->
+                        <div class="px-4 pt-4 pb-2">
+                            <h3 class="text-xs font-extrabold text-slate-400 uppercase tracking-widest pl-2 mb-3">入場整理券</h3>
+                            <div class="space-y-1">
+                                <div class="task-row flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-slate-200 bg-white shadow-sm cursor-pointer">
+                                    <div class="flex items-center gap-4">
+                                        <button class="w-5 h-5 rounded border border-slate-300 flex items-center justify-center text-transparent hover:border-blue-500 hover:text-blue-500 transition-colors"><i class="ph ph-check text-sm"></i></button>
+                                        <div>
+                                            <p class="font-semibold text-slate-800 text-sm">入場整理券の印刷発注</p>
+                                            <p class="text-xs text-slate-500 flex items-center gap-2 mt-0.5"><i class="ph ph-calendar"></i> 本日期限</p>
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex flex-shrink-0 items-center px-2.5 py-1 rounded-md text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 w-20 justify-center">進行中</span>
+                                </div>
+                                <div class="task-row flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-slate-200 bg-white shadow-sm cursor-pointer">
+                                    <div class="flex items-center gap-4">
+                                        <button class="w-5 h-5 rounded border border-slate-300 flex items-center justify-center text-transparent hover:border-blue-500 hover:text-blue-500 transition-colors"><i class="ph ph-check text-sm"></i></button>
+                                        <div>
+                                            <p class="font-semibold text-slate-800 text-sm">選挙人名簿との突合確認</p>
+                                            <p class="text-xs text-slate-500 flex items-center gap-2 mt-0.5"><i class="ph ph-calendar"></i> 明日期限</p>
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex flex-shrink-0 items-center px-2.5 py-1 rounded-md text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 w-20 justify-center">確認待ち</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 期日前投票カテゴリ -->
+                        <div class="px-4 pt-4 pb-2">
+                            <h3 class="text-xs font-extrabold text-slate-400 uppercase tracking-widest pl-2 mb-3">期日前投票</h3>
+                            <div class="space-y-1">
+                                <div class="task-row flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-slate-200 bg-white shadow-sm cursor-pointer">
+                                    <div class="flex items-center gap-4">
+                                        <button class="w-5 h-5 rounded border border-slate-300 flex items-center justify-center text-transparent hover:border-blue-500 hover:text-blue-500 transition-colors"><i class="ph ph-check text-sm"></i></button>
+                                        <div>
+                                            <p class="font-semibold text-slate-800 text-sm">期日前投票所の設営確認</p>
+                                            <p class="text-xs text-slate-500 flex items-center gap-2 mt-0.5"><i class="ph ph-calendar"></i> 5月3日期限</p>
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex flex-shrink-0 items-center px-2.5 py-1 rounded-md text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 w-20 justify-center">未着手</span>
+                                </div>
+                                <div class="task-row flex items-center justify-between p-3 rounded-xl border border-transparent hover:border-slate-200 bg-slate-50/50 shadow-sm opacity-80 cursor-pointer">
+                                    <div class="flex items-center gap-4">
+                                        <button class="w-5 h-5 rounded bg-emerald-500 border border-emerald-500 flex items-center justify-center text-white"><i class="ph ph-check text-sm"></i></button>
+                                        <div>
+                                            <p class="font-medium text-slate-500 line-through text-sm">投票用紙交付機の動作確認</p>
+                                            <p class="text-xs text-slate-400 flex items-center gap-2 mt-0.5"><i class="ph ph-check-circle"></i> 完了 09:42</p>
+                                        </div>
+                                    </div>
+                                    <span class="inline-flex flex-shrink-0 items-center px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 w-20 justify-center">完了</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- アクティビティ -->
+                <div class="col-span-4 flex flex-col gap-6">
+                    <div class="bg-white rounded-2xl p-6 shadow-b2b border border-slate-200/60 flex-1">
+                        <h3 class="font-bold text-slate-800 text-sm mb-4 border-b border-slate-100 pb-3 flex justify-between items-center">
+                            受電記録サマリー
+                            <i class="ph ph-phone text-slate-400"></i>
+                        </h3>
+                        <div class="flex items-baseline gap-2 mb-4">
+                            <span class="text-4xl font-black text-slate-700">0</span>
+                            <span class="text-sm font-bold text-slate-500">件（今日）</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mb-4">まだ記録がありません</p>
+                        <a href="/calls" class="block w-full text-center py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-semibold text-slate-700 hover:bg-slate-100 transition">受電を記録する →</a>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-6 shadow-b2b border border-slate-200/60">
+                        <h3 class="font-bold text-slate-800 text-sm mb-4 border-b border-slate-100 pb-3 flex justify-between items-center">
+                            最近のアクティビティ
+                            <i class="ph ph-clock-counter-clockwise text-slate-400"></i>
+                        </h3>
+                        <div class="relative pl-4 border-l border-slate-100 space-y-4">
+                            <div class="relative">
+                                <div class="absolute -left-[21px] top-1 w-2 h-2 rounded-full bg-blue-500 ring-4 ring-white"></div>
+                                <p class="text-xs text-slate-500 font-semibold mb-0.5">10分前</p>
+                                <p class="text-sm font-medium text-slate-800">入場整理券の印刷発注 を<span class="text-blue-600">進行中</span>に更新</p>
+                            </div>
+                            <div class="relative">
+                                <div class="absolute -left-[21px] top-1 w-2 h-2 rounded-full bg-emerald-500 ring-4 ring-white"></div>
+                                <p class="text-xs text-slate-500 font-semibold mb-0.5">1時間前</p>
+                                <p class="text-sm font-medium text-slate-800">投票用紙交付機の動作確認 を<span class="text-emerald-600">完了</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</body>
+</html>

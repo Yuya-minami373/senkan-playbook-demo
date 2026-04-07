@@ -1,0 +1,363 @@
+<!--
+  aesthetic_dna: B2B Enterprise / Calm Authority / Deep Spatial Workspace
+  ui_paradigm: Multi-Pane Workspace & Sticky Synchronized Gantt Grid
+  palette: Obsidian Navy (#0f172a), Slate White (#f8fafc), Interface Blue (#f0f5ff), Status Accents (Emerald, Amber, Blue, Red)
+  generated_by: AIDesigner MCP run_id: 0a6d6041-5b47-4ddc-ab40-71fab2801da8
+-->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniGuide - Gantt Workspace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'Noto Sans JP', 'sans-serif'] },
+                    colors: { navy: '#0f172a', canvas: '#f0f5ff' }
+                }
+            }
+        }
+    </script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 10px; height: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 6px; border: 2px solid #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .custom-scrollbar::-webkit-scrollbar-corner { background: #f1f5f9; }
+        .sticky-left-shadow { box-shadow: 6px 0 12px -4px rgba(0,0,0,0.05); clip-path: inset(0 -20px 0 0); }
+        .sticky-top-shadow { box-shadow: 0 4px 6px -2px rgba(0,0,0,0.02); }
+        .gantt-bg-col:nth-child(7n+1), .gantt-bg-col:nth-child(7n) { background-color: rgba(241,245,249,0.6); }
+        .pattern-done {
+            background-image: repeating-linear-gradient(45deg, rgba(255,255,255,0.15) 0px, rgba(255,255,255,0.15) 4px, transparent 4px, transparent 8px);
+        }
+        .no-select { user-select: none; -webkit-user-select: none; }
+    </style>
+</head>
+<body class="flex h-screen w-screen bg-navy text-slate-800 font-sans overflow-hidden antialiased">
+
+    <!-- Sidebar -->
+    <aside class="w-[72px] lg:w-64 flex-shrink-0 flex flex-col justify-between border-r border-slate-800 bg-navy text-slate-400 z-10">
+        <div>
+            <div class="h-16 flex items-center justify-center lg:justify-start lg:px-6 border-b border-slate-800 text-white font-semibold tracking-wide">
+                <div class="inline-block bg-white/90 rounded-md px-2 py-1 lg:mr-3">
+                    <img src="../public/logo.png" alt="UniPoll" style="height:24px; width:auto;">
+                </div>
+                <span class="hidden lg:block text-lg text-blue-400">UniGuide</span>
+            </div>
+            <nav class="mt-6 flex flex-col gap-2 px-3">
+                <a href="#" class="flex items-center p-3 rounded-lg hover:bg-slate-800 hover:text-white transition-colors group">
+                    <i class="ph ph-squares-four text-xl lg:mr-3 group-hover:text-blue-400"></i>
+                    <span class="hidden lg:block text-sm font-medium">ダッシュボード</span>
+                </a>
+                <a href="#" class="flex items-center p-3 rounded-lg bg-blue-500/10 text-blue-400 relative">
+                    <div class="absolute left-0 top-2 bottom-2 w-1 bg-blue-500 rounded-r-full"></div>
+                    <i class="ph-fill ph-kanban text-xl lg:mr-3"></i>
+                    <span class="hidden lg:block text-sm font-medium">ガントチャート</span>
+                </a>
+                <a href="#" class="flex items-center p-3 rounded-lg hover:bg-slate-800 hover:text-white transition-colors group">
+                    <i class="ph ph-phone text-xl lg:mr-3 group-hover:text-purple-400"></i>
+                    <span class="hidden lg:block text-sm font-medium">受電記録</span>
+                </a>
+                <a href="#" class="flex items-center p-3 rounded-lg hover:bg-slate-800 hover:text-white transition-colors group">
+                    <i class="ph ph-book-open text-xl lg:mr-3 group-hover:text-blue-400"></i>
+                    <span class="hidden lg:block text-sm font-medium">マニュアル</span>
+                </a>
+                <a href="#" class="flex items-center p-3 rounded-lg hover:bg-slate-800 hover:text-white transition-colors group">
+                    <i class="ph ph-map-pin text-xl lg:mr-3 group-hover:text-pink-400"></i>
+                    <span class="hidden lg:block text-sm font-medium">投票所マップ</span>
+                </a>
+            </nav>
+        </div>
+        <div class="p-4 border-t border-slate-800">
+            <div class="flex items-center p-2 rounded-lg">
+                <div class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-sm font-bold border border-slate-600">係</div>
+                <div class="hidden lg:block ml-3">
+                    <p class="text-sm font-medium text-slate-200">○○市選挙管理委員会</p>
+                    <p class="text-[10px] text-slate-500">係長</p>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Canvas -->
+    <main class="flex-1 flex flex-col bg-canvas rounded-l-3xl overflow-hidden shadow-[-10px_0_30px_rgba(0,0,0,0.5)] border-l border-slate-700/50 min-w-0 z-20 relative">
+
+        <!-- App Header -->
+        <header class="h-16 flex justify-between items-center px-6 bg-white border-b border-slate-200 shrink-0">
+            <div>
+                <h1 class="text-[15px] font-semibold text-slate-900 tracking-tight flex items-center gap-2">
+                    令和8年 ○○市議会議員選挙
+                    <span class="px-2 py-0.5 rounded text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">準備中</span>
+                </h1>
+                <div class="text-[12px] text-slate-500 mt-0.5 flex items-center gap-2">
+                    <i class="ph-fill ph-calendar-blank"></i> 投票日: 2026年5月11日（残り35日）
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <button class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 shadow-sm">
+                    <i class="ph ph-faders"></i> フィルター
+                </button>
+                <button class="flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-white bg-navy rounded-lg hover:bg-slate-800 shadow-sm">
+                    <i class="ph ph-export"></i> エクスポート
+                </button>
+            </div>
+        </header>
+
+        <!-- Legend bar -->
+        <div class="h-10 bg-[#f8fafc] border-b border-slate-200 flex items-center justify-between px-6 shrink-0 text-xs text-slate-500 no-select">
+            <div class="flex items-center gap-5">
+                <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-slate-300"></div> 未着手</div>
+                <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-blue-500"></div> 進行中</div>
+                <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-amber-400"></div> 確認待ち</div>
+                <div class="flex items-center gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-emerald-500 opacity-60"></div> 完了</div>
+                <div class="w-px h-4 bg-slate-200"></div>
+                <div class="flex items-center gap-1.5"><div class="w-3 border-t-2 border-dashed border-orange-400"></div> 告示日</div>
+                <div class="flex items-center gap-1.5"><div class="w-3 border-t-2 border-dashed border-red-600"></div> 投票日</div>
+                <div class="flex items-center gap-1.5"><div class="w-0.5 h-3 bg-red-500"></div> 今日</div>
+            </div>
+            <span class="text-slate-400">← 横スクロールで全期間を確認</span>
+        </div>
+
+        <!-- Gantt Grid -->
+        <div class="flex-1 m-4 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
+            <div class="flex-1 overflow-auto custom-scrollbar relative bg-white">
+                <div class="min-h-full pb-16 relative" style="width: 3672px;">
+
+                    <!-- BG Grid -->
+                    <div class="absolute top-[56px] bottom-0 left-[280px] w-[3392px] pointer-events-none flex z-0">
+                        <!-- 106 columns -->
+                        <div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full border-r border-slate-100 gantt-bg-col"></div><div class="w-[32px] h-full gantt-bg-col"></div>
+                    </div>
+
+                    <!-- Milestone lines -->
+                    <div class="absolute top-0 bottom-0 left-[280px] pointer-events-none z-10">
+                        <!-- 今日 (Apr 5 = index 63: 63*32=2016px) -->
+                        <div style="left: 2016px" class="absolute top-0 bottom-0 border-l-2 border-red-500 z-50">
+                            <div class="absolute top-[8px] -left-[14px] bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">今日</div>
+                        </div>
+                        <!-- 告示日 (May 4 = index 92: 92*32=2944px) -->
+                        <div style="left: 2944px" class="absolute top-[18px] bottom-0 border-l-2 border-dashed border-orange-400">
+                            <div class="absolute top-[8px] -left-12 bg-orange-100 text-orange-700 border border-orange-200 text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">告示日 5/4</div>
+                        </div>
+                        <!-- 投票日 (May 11 = index 99: 99*32=3168px) -->
+                        <div style="left: 3168px" class="absolute top-[18px] bottom-0 border-l-2 border-dashed border-red-600">
+                            <div class="absolute top-[8px] -left-12 bg-red-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">投票日 5/11</div>
+                        </div>
+                    </div>
+
+                    <!-- Header -->
+                    <div class="sticky top-0 z-40 flex bg-white border-b border-slate-200 no-select">
+                        <div class="w-[280px] sticky left-0 z-50 bg-white border-r border-slate-200 flex items-end p-3 sticky-left-shadow">
+                            <span class="text-[11px] font-semibold text-slate-500 tracking-wider">担当者 / タスク</span>
+                        </div>
+                        <div class="flex-1 flex flex-col pt-1">
+                            <div class="flex h-6">
+                                <div class="flex items-center px-3 text-xs font-bold text-slate-700 border-r border-slate-200/50" style="width: 896px;">2026年 2月</div>
+                                <div class="flex items-center px-3 text-xs font-bold text-slate-700 border-r border-slate-200/50" style="width: 992px;">3月</div>
+                                <div class="flex items-center px-3 text-xs font-bold text-slate-700 border-r border-slate-200/50" style="width: 960px;">4月</div>
+                                <div class="flex items-center px-3 text-xs font-bold text-slate-700" style="width: 544px;">5月</div>
+                            </div>
+                            <div class="flex h-7 bg-slate-50/50 relative">
+                                <div class="absolute inset-0 flex pointer-events-none text-[10px] text-slate-500 font-medium">
+                                    <div style="left:0px" class="absolute w-[32px] text-center pt-1 text-red-500">1</div>
+                                    <div style="left:160px" class="absolute w-[32px] text-center pt-1">6</div>
+                                    <div style="left:288px" class="absolute w-[32px] text-center pt-1">10</div>
+                                    <div style="left:448px" class="absolute w-[32px] text-center pt-1">15</div>
+                                    <div style="left:608px" class="absolute w-[32px] text-center pt-1">20</div>
+                                    <div style="left:768px" class="absolute w-[32px] text-center pt-1">25</div>
+                                    <div style="left:896px" class="absolute w-[32px] text-center pt-1 text-red-500">1</div>
+                                    <div style="left:1056px" class="absolute w-[32px] text-center pt-1">6</div>
+                                    <div style="left:1184px" class="absolute w-[32px] text-center pt-1">10</div>
+                                    <div style="left:1344px" class="absolute w-[32px] text-center pt-1">15</div>
+                                    <div style="left:1504px" class="absolute w-[32px] text-center pt-1">20</div>
+                                    <div style="left:1664px" class="absolute w-[32px] text-center pt-1">25</div>
+                                    <div style="left:1888px" class="absolute w-[32px] text-center pt-1">1</div>
+                                    <div style="left:2016px" class="absolute w-[32px] text-center pt-1 text-red-500 font-bold">5</div>
+                                    <div style="left:2176px" class="absolute w-[32px] text-center pt-1">10</div>
+                                    <div style="left:2336px" class="absolute w-[32px] text-center pt-1">15</div>
+                                    <div style="left:2496px" class="absolute w-[32px] text-center pt-1">20</div>
+                                    <div style="left:2656px" class="absolute w-[32px] text-center pt-1">25</div>
+                                    <div style="left:2816px" class="absolute w-[32px] text-center pt-1">30</div>
+                                    <div style="left:2848px" class="absolute w-[32px] text-center pt-1">1</div>
+                                    <div style="left:2944px" class="absolute w-[32px] text-center pt-1 font-bold text-orange-600">4</div>
+                                    <div style="left:3168px" class="absolute w-[32px] text-center pt-1 font-bold text-red-600">11</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Staff: 田中 花子 -->
+                    <div class="flex h-10 bg-slate-100 border-b border-slate-200">
+                        <div class="w-[280px] sticky left-0 z-30 bg-slate-100 flex items-center px-4 border-r border-slate-200 sticky-left-shadow">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-[10px] font-bold">田</div>
+                                <span class="text-[13px] font-bold text-slate-800">田中 花子</span>
+                                <span class="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-[9px] text-slate-500">入場整理券担当</span>
+                            </div>
+                        </div>
+                        <div class="flex-1"></div>
+                    </div>
+
+                    <!-- 業者選定 (Feb 1-5, 完了) -->
+                    <div class="flex h-9 border-b border-slate-100 group/row hover:bg-slate-50/50 transition-colors">
+                        <div class="w-[280px] sticky left-0 z-30 bg-white flex items-center px-4 pl-10 border-r border-slate-200 group-hover/row:bg-slate-50 sticky-left-shadow cursor-pointer">
+                            <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 shrink-0"></div>
+                            <span class="text-xs text-slate-600 truncate group-hover/row:text-blue-600">業者選定</span>
+                        </div>
+                        <div class="flex-1 relative">
+                            <div class="absolute top-[6px] h-6 rounded bg-emerald-500 opacity-60 pattern-done border border-emerald-600/30 flex items-center justify-end pr-2 text-[10px] text-emerald-900 shadow-sm" style="left:0px; width:160px;">
+                                <span class="font-medium">完了</span>
+                                <span class="absolute -right-7 text-[10px] text-slate-400">2/5</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 原稿確認 (Feb 10-20, 完了) -->
+                    <div class="flex h-9 border-b border-slate-100 group/row hover:bg-slate-50/50 transition-colors">
+                        <div class="w-[280px] sticky left-0 z-30 bg-white flex items-center px-4 pl-10 border-r border-slate-200 group-hover/row:bg-slate-50 sticky-left-shadow cursor-pointer">
+                            <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 shrink-0"></div>
+                            <span class="text-xs text-slate-600 truncate group-hover/row:text-blue-600">原稿確認</span>
+                        </div>
+                        <div class="flex-1 relative">
+                            <div class="absolute top-[6px] h-6 rounded bg-emerald-500 opacity-60 pattern-done border border-emerald-600/30 flex items-center justify-end pr-2 text-[10px] text-emerald-900 shadow-sm" style="left:288px; width:352px;">
+                                <span class="font-medium">完了</span>
+                                <span class="absolute -right-9 text-[10px] text-slate-400">2/20</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 印刷発注 (Mar 1-15, 進行中・遅延) -->
+                    <div class="flex h-9 border-b border-slate-100 group/row hover:bg-red-50/30 transition-colors">
+                        <div class="w-[280px] sticky left-0 z-30 bg-white flex items-center px-4 pl-10 border-r border-slate-200 group-hover/row:bg-red-50/30 sticky-left-shadow cursor-pointer">
+                            <div class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-2 shrink-0 relative">
+                                <div class="absolute -inset-1 rounded-full border border-red-400 animate-pulse"></div>
+                            </div>
+                            <span class="text-xs font-medium text-slate-800 truncate group-hover/row:text-blue-600">印刷発注</span>
+                            <i class="ph-fill ph-warning-circle text-red-500 ml-auto text-sm"></i>
+                        </div>
+                        <div class="flex-1 relative">
+                            <div class="absolute top-[6px] h-6 rounded bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center px-2 text-[10px] text-white shadow-md shadow-blue-500/20 ring-2 ring-red-400 ring-offset-1 z-10" style="left:896px; width:480px;">
+                                <span class="font-medium drop-shadow">遅延中</span>
+                                <span class="absolute -right-9 text-[10px] text-red-500 font-bold">3/15</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 校正作業 (Mar 20-Apr 10, 未着手) -->
+                    <div class="flex h-9 border-b border-slate-100 group/row hover:bg-slate-50/50 transition-colors">
+                        <div class="w-[280px] sticky left-0 z-30 bg-white flex items-center px-4 pl-10 border-r border-slate-200 group-hover/row:bg-slate-50 sticky-left-shadow cursor-pointer">
+                            <div class="w-1.5 h-1.5 rounded-full bg-slate-300 mr-2 shrink-0"></div>
+                            <span class="text-xs text-slate-500 truncate group-hover/row:text-blue-600">校正作業</span>
+                        </div>
+                        <div class="flex-1 relative">
+                            <div class="absolute top-[6px] h-6 rounded bg-slate-200 border border-slate-300 text-slate-600 flex items-center px-2 text-[10px] cursor-pointer hover:bg-slate-300 transition-colors" style="left:1504px; width:704px;">
+                                <span class="font-medium">未着手</span>
+                                <span class="absolute -right-9 text-[10px] text-slate-400">4/10</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 発送準備 (Apr 1-20, 未着手) -->
+                    <div class="flex h-9 border-b border-slate-100 group/row hover:bg-slate-50/50 transition-colors">
+                        <div class="w-[280px] sticky left-0 z-30 bg-white flex items-center px-4 pl-10 border-r border-slate-200 group-hover/row:bg-slate-50 sticky-left-shadow cursor-pointer">
+                            <div class="w-1.5 h-1.5 rounded-full bg-slate-300 mr-2 shrink-0"></div>
+                            <span class="text-xs text-slate-500 truncate group-hover/row:text-blue-600">発送準備</span>
+                        </div>
+                        <div class="flex-1 relative">
+                            <div class="absolute top-[6px] h-6 rounded bg-slate-200 border border-slate-300 text-slate-600 flex items-center px-2 text-[10px] cursor-pointer hover:bg-slate-300 transition-colors" style="left:1888px; width:640px;">
+                                <span class="absolute -right-9 text-[10px] text-slate-400">4/20</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Staff: 佐藤 一郎 -->
+                    <div class="flex h-10 bg-slate-100 border-b border-slate-200 mt-2">
+                        <div class="w-[280px] sticky left-0 z-30 bg-slate-100 flex items-center px-4 border-r border-slate-200 sticky-left-shadow">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-[10px] font-bold">佐</div>
+                                <span class="text-[13px] font-bold text-slate-800">佐藤 一郎</span>
+                                <span class="px-1.5 py-0.5 rounded bg-white border border-slate-200 text-[9px] text-slate-500">投票所管理担当</span>
+                            </div>
+                        </div>
+                        <div class="flex-1"></div>
+                    </div>
+
+                    <!-- 投票所一覧作成 (Feb 5-15, 完了) -->
+                    <div class="flex h-9 border-b border-slate-100 group/row hover:bg-slate-50/50 transition-colors">
+                        <div class="w-[280px] sticky left-0 z-30 bg-white flex items-center px-4 pl-10 border-r border-slate-200 group-hover/row:bg-slate-50 sticky-left-shadow cursor-pointer">
+                            <div class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2 shrink-0"></div>
+                            <span class="text-xs text-slate-600 truncate group-hover/row:text-blue-600">投票所一覧作成</span>
+                        </div>
+                        <div class="flex-1 relative">
+                            <div class="absolute top-[6px] h-6 rounded bg-emerald-500 opacity-60 pattern-done border border-emerald-600/30 flex items-center justify-end pr-2 text-[10px] shadow-sm" style="left:128px; width:352px;">
+                                <span class="absolute -right-9 text-[10px] text-slate-400">2/15</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 備品確認 (Mar 1-20, 進行中・遅延) -->
+                    <div class="flex h-9 border-b border-slate-100 group/row hover:bg-red-50/30 transition-colors">
+                        <div class="w-[280px] sticky left-0 z-30 bg-white flex items-center px-4 pl-10 border-r border-slate-200 group-hover/row:bg-red-50/30 sticky-left-shadow cursor-pointer">
+                            <div class="w-1.5 h-1.5 rounded-full bg-blue-500 mr-2 shrink-0 relative">
+                                <div class="absolute -inset-1 rounded-full border border-red-400 animate-pulse"></div>
+                            </div>
+                            <span class="text-xs font-medium text-slate-800 truncate">備品確認</span>
+                            <i class="ph-fill ph-warning-circle text-red-500 ml-auto text-sm"></i>
+                        </div>
+                        <div class="flex-1 relative">
+                            <div class="absolute top-[6px] h-6 rounded bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center px-2 text-[10px] text-white shadow-md ring-2 ring-red-400 ring-offset-1 z-10" style="left:896px; width:640px;">
+                                <span class="font-medium">遅延中</span>
+                                <span class="absolute -right-9 text-[10px] text-red-500 font-bold">3/20</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 投票立会人選定 (Mar 10-25, 確認待ち) -->
+                    <div class="flex h-9 border-b border-slate-100 group/row hover:bg-slate-50/50 transition-colors">
+                        <div class="w-[280px] sticky left-0 z-30 bg-white flex items-center px-4 pl-10 border-r border-slate-200 group-hover/row:bg-slate-50 sticky-left-shadow cursor-pointer">
+                            <div class="w-1.5 h-1.5 rounded-full bg-amber-400 mr-2 shrink-0"></div>
+                            <span class="text-xs font-medium text-slate-800 truncate group-hover/row:text-amber-600">投票立会人選定</span>
+                        </div>
+                        <div class="flex-1 relative">
+                            <div class="absolute top-[6px] h-6 rounded bg-gradient-to-r from-amber-400 to-orange-400 flex items-center px-2 text-[10px] text-white shadow-md shadow-orange-500/20 z-10" style="left:1184px; width:512px;">
+                                <i class="ph-fill ph-hourglass-medium mr-1"></i>
+                                <span class="font-medium">返答待ち</span>
+                                <span class="absolute -right-9 text-[10px] text-amber-600 font-bold">3/25</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 投票所設営計画 (Mar 25-Apr 15, 未着手) -->
+                    <div class="flex h-9 border-b border-slate-100 group/row hover:bg-slate-50/50 transition-colors">
+                        <div class="w-[280px] sticky left-0 z-30 bg-white flex items-center px-4 pl-10 border-r border-slate-200 group-hover/row:bg-slate-50 sticky-left-shadow cursor-pointer">
+                            <div class="w-1.5 h-1.5 rounded-full bg-slate-300 mr-2 shrink-0"></div>
+                            <span class="text-xs text-slate-500 truncate group-hover/row:text-blue-600">投票所設営計画</span>
+                        </div>
+                        <div class="flex-1 relative">
+                            <div class="absolute top-[6px] h-6 rounded bg-slate-200 border border-slate-300 text-slate-600 flex items-center px-2 text-[10px] hover:bg-slate-300 transition-colors" style="left:1664px; width:704px;">
+                                <span class="font-medium">未着手</span>
+                                <span class="absolute -right-9 text-[10px] text-slate-400">4/15</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="h-24"></div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="h-8 bg-slate-50 border-t border-slate-200 flex items-center px-4 text-[10px] text-slate-400 justify-between shrink-0">
+                <span>全タスク: 9件 ｜ 完了: 3件 ｜ 進行中: 2件 ｜ 未着手: 4件</span>
+                <span>← 横スクロールで全期間を確認</span>
+            </div>
+        </div>
+    </main>
+</body>
+</html>
