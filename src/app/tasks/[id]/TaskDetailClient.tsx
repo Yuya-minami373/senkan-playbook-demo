@@ -15,6 +15,8 @@ interface Task {
   started_at: string | null;
   completed_at: string | null;
   assignee_name: string;
+  sub_assignee_id: number | null;
+  sub_assignee_name: string | null;
   playbook_conditions: string;
   playbook_criteria: string;
   playbook_pitfalls: string;
@@ -43,6 +45,57 @@ interface Props {
   nextTask: NextTask | null;
 }
 
+/* ── SVG Icons ── */
+function IconShield({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+    </svg>
+  );
+}
+function IconKey({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+    </svg>
+  );
+}
+function IconScale({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v17.25m0 0c-1.472 0-2.882.265-4.185.75M12 20.25c1.472 0 2.882.265 4.185.75M18.75 4.97A48.416 48.416 0 0012 4.5c-2.291 0-4.545.16-6.75.47m13.5 0c1.01.143 2.01.317 3 .52m-3-.52l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.988 5.988 0 01-2.031.352 5.988 5.988 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L18.75 4.971zm-16.5.52c.99-.203 1.99-.377 3-.52m0 0l2.62 10.726c.122.499-.106 1.028-.589 1.202a5.989 5.989 0 01-2.031.352 5.989 5.989 0 01-2.031-.352c-.483-.174-.711-.703-.59-1.202L5.25 4.971z" />
+    </svg>
+  );
+}
+function IconLightBulb({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 001.5-.189m-1.5.189a6.01 6.01 0 01-1.5-.189m3.75 7.478a12.06 12.06 0 01-4.5 0m3.75 2.383a14.406 14.406 0 01-3 0M14.25 18v-.192c0-.983.658-1.823 1.508-2.316a7.5 7.5 0 10-7.517 0c.85.493 1.509 1.333 1.509 2.316V18" />
+    </svg>
+  );
+}
+function IconBook({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+    </svg>
+  );
+}
+function IconCheck({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+    </svg>
+  );
+}
+function IconCheckCircle({ className }: { className?: string }) {
+  return (
+    <svg className={className ?? "w-4 h-4"} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
+
 function renderMarkdown(text: string): string {
   return text
     .replace(/^### (.+)$/gm, '<h3 class="text-base font-bold text-slate-800 mt-5 mb-2">$1</h3>')
@@ -59,7 +112,7 @@ function renderMarkdown(text: string): string {
     )
     .replace(
       /^- (.+)$/gm,
-      '<li class="text-slate-700 text-sm py-0.5 flex items-start gap-1.5"><span class="text-orange-400 mt-1 flex-shrink-0">•</span><span>$1</span></li>'
+      '<li class="text-slate-700 text-sm py-0.5 flex items-start gap-1.5"><span class="text-blue-400 mt-1 flex-shrink-0">&bull;</span><span>$1</span></li>'
     )
     .replace(/^\|(.+)\|$/gm, (match) => {
       const cells = match.split("|").filter((_, i, a) => i > 0 && i < a.length - 1);
@@ -93,29 +146,22 @@ function formatDate(dateStr: string) {
 const statusOptions = ["未着手", "進行中", "確認待ち"];
 
 const STATUS_CONFIG = {
-  "未着手": { dot: "bg-gray-400", btn: "bg-gray-100 text-gray-600 border-gray-200", active: "bg-gray-600 text-white border-gray-600" },
-  "進行中": { dot: "bg-blue-500", btn: "bg-white text-blue-600 border-blue-200", active: "bg-blue-600 text-white border-blue-600" },
-  "確認待ち": { dot: "bg-yellow-500", btn: "bg-white text-yellow-700 border-yellow-200", active: "bg-yellow-500 text-white border-yellow-500" },
-  "完了": { dot: "bg-emerald-500", btn: "bg-white text-emerald-700 border-emerald-200", active: "bg-emerald-600 text-white border-emerald-600" },
+  "未着手":   { dot: "bg-gray-400", btn: "bg-white text-gray-600 border-gray-200 hover:border-gray-300", active: "bg-gray-600 text-white border-gray-600 shadow-sm" },
+  "進行中":   { dot: "bg-blue-500", btn: "bg-white text-blue-600 border-gray-200 hover:border-blue-300", active: "bg-blue-600 text-white border-blue-600 shadow-sm" },
+  "確認待ち": { dot: "bg-yellow-500", btn: "bg-white text-yellow-700 border-gray-200 hover:border-yellow-300", active: "bg-yellow-500 text-white border-yellow-500 shadow-sm" },
+  "完了":     { dot: "bg-emerald-500", btn: "bg-white text-emerald-700 border-gray-200 hover:border-emerald-300", active: "bg-emerald-600 text-white border-emerald-600 shadow-sm" },
 } as const;
 
 const SEVERITY_STYLE = {
-  critical: { label: "要確認", bg: "bg-red-50", text: "text-red-700", border: "border-red-200", icon: "🔴" },
-  warning: { label: "注意", bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", icon: "🟡" },
-  caution: { label: "参考", bg: "bg-slate-50", text: "text-slate-600", border: "border-slate-200", icon: "⚪" },
+  critical: { label: "要確認", bg: "bg-red-50", text: "text-red-700", border: "border-red-200", dot: "bg-red-500" },
+  warning:  { label: "注意",   bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200", dot: "bg-amber-400" },
+  caution:  { label: "参考",   bg: "bg-slate-50", text: "text-slate-600", border: "border-slate-200", dot: "bg-slate-400" },
 };
 
 type SeverityKey = keyof typeof SEVERITY_STYLE;
 
-interface PitfallItem {
-  text: string;
-  severity: SeverityKey;
-}
-
-interface CriteriaItem {
-  q: string;
-  a: string;
-}
+interface PitfallItem { text: string; severity: SeverityKey }
+interface CriteriaItem { q: string; a: string }
 
 function parsePitfalls(raw: string): PitfallItem[] {
   try {
@@ -123,9 +169,7 @@ function parsePitfalls(raw: string): PitfallItem[] {
     if (Array.isArray(parsed)) {
       return parsed.map((item) => {
         if (typeof item === "string") return { text: item, severity: "warning" as SeverityKey };
-        if (item && typeof item === "object" && "text" in item) {
-          return { text: item.text, severity: (item.severity ?? "warning") as SeverityKey };
-        }
+        if (item && typeof item === "object" && "text" in item) return { text: item.text, severity: (item.severity ?? "warning") as SeverityKey };
         return { text: String(item), severity: "warning" as SeverityKey };
       });
     }
@@ -158,6 +202,7 @@ export default function TaskDetailClient({ task, user, manual, nextTask }: Props
   const [savingEffort, setSavingEffort] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [memoExpanded, setMemoExpanded] = useState(false);
 
   const conditions: string[] = JSON.parse(task.playbook_conditions || "[]");
 
@@ -165,10 +210,9 @@ export default function TaskDetailClient({ task, user, manual, nextTask }: Props
   const [checkedConditions, setCheckedConditions] = useState<boolean[]>(() => {
     if (typeof window === "undefined") return conditions.map(() => false);
     try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        const parsed: boolean[] = JSON.parse(saved);
-        // 条件数が変わった場合は長さを合わせる
+      const s = localStorage.getItem(storageKey);
+      if (s) {
+        const parsed: boolean[] = JSON.parse(s);
         return conditions.map((_, i) => parsed[i] ?? false);
       }
     } catch { /* ignore */ }
@@ -188,8 +232,7 @@ export default function TaskDetailClient({ task, user, manual, nextTask }: Props
   const criteria = parseCriteria(task.playbook_criteria);
   const pitfalls = parsePitfalls(task.playbook_pitfalls);
 
-  const hasPlaybook =
-    conditions.length > 0 || criteria.length > 0 || pitfalls.length > 0 || !!task.playbook_tip;
+  const hasGuide = conditions.length > 0 || criteria.length > 0 || pitfalls.length > 0 || !!task.playbook_tip;
 
   async function updateStatus(newStatus: string) {
     setSaving(true);
@@ -240,36 +283,34 @@ export default function TaskDetailClient({ task, user, manual, nextTask }: Props
     setTimeout(() => setSaved(false), 2000);
   }
 
-  const currentStatus = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG["未着手"];
-
   return (
     <AppShell user={user}>
 
-      {/* ━━━ 完了ポップアップ（工数記録） ━━━ */}
+      {/* ━━━ 完了モーダル ━━━ */}
       {showCompleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl px-8 py-7 w-[400px] flex flex-col gap-5">
-            {/* ヘッダー */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 px-7 py-6 w-[420px] flex flex-col gap-5">
             <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                <p className="text-xs font-semibold text-emerald-600">完了</p>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <IconCheckCircle className="w-4 h-4 text-emerald-600" />
+                </div>
+                <p className="text-sm font-bold text-emerald-600">タスク完了</p>
               </div>
-              <p className="text-base font-bold text-gray-800 leading-snug">「{task.title}」</p>
+              <p className="text-[15px] font-bold text-gray-800 leading-snug">{task.title}</p>
             </div>
 
-            {/* 工数選択 */}
             <div>
-              <p className="text-sm font-bold text-gray-700 mb-3">このタスクにかかった時間は？</p>
+              <p className="text-sm font-semibold text-gray-700 mb-3">このタスクにかかった時間は？</p>
               <div className="grid grid-cols-2 gap-2">
                 {["30分以内", "1〜2時間", "半日（3〜4時間）", "1日以上"].map(opt => (
                   <button
                     key={opt}
                     onClick={() => setSelectedEffort(opt)}
-                    className={`py-3 rounded-xl text-sm font-semibold border-2 transition-all ${
+                    className={`py-3 rounded-xl text-sm font-semibold border transition-all ${
                       selectedEffort === opt
-                        ? "bg-[#1a3a8f] text-white border-[#1a3a8f]"
-                        : "bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-[#1a3a8f]"
+                        ? "bg-blue-600 text-white border-blue-600 shadow-sm"
+                        : "bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600"
                     }`}
                   >
                     {opt}
@@ -278,25 +319,24 @@ export default function TaskDetailClient({ task, user, manual, nextTask }: Props
               </div>
             </div>
 
-            {/* 次のタスク */}
             {nextTask && (
-              <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3">
-                <p className="text-[11px] text-blue-500 font-semibold mb-1">次のタスク</p>
+              <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3">
+                <p className="text-[11px] text-gray-400 font-semibold mb-1">次のタスク</p>
                 <Link
                   href={`/tasks/${nextTask.id}`}
                   onClick={() => setShowCompleteModal(false)}
-                  className="text-sm font-bold text-[#1a3a8f] hover:underline leading-snug"
+                  className="text-sm font-bold text-blue-600 hover:text-blue-700 hover:underline leading-snug"
                 >
-                  {nextTask.title} →
+                  {nextTask.title}
+                  <svg className="w-3 h-3 inline ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </Link>
                 {nextTask.due_date && (
-                  <p className="text-[10px] text-gray-400 mt-0.5">期限: {nextTask.due_date}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">期限: {formatDate(nextTask.due_date)}</p>
                 )}
               </div>
             )}
 
-            {/* アクションボタン */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 pt-1">
               <button
                 onClick={handleModalClose}
                 className="flex-1 py-2.5 rounded-xl text-sm font-semibold text-gray-500 border border-gray-200 hover:bg-gray-50 transition"
@@ -306,7 +346,7 @@ export default function TaskDetailClient({ task, user, manual, nextTask }: Props
               <button
                 onClick={handleEffortSave}
                 disabled={!selectedEffort || savingEffort}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-[#1a3a8f] text-white hover:bg-blue-900 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition shadow-sm"
               >
                 {savingEffort ? "記録中..." : "記録して完了"}
               </button>
@@ -316,10 +356,11 @@ export default function TaskDetailClient({ task, user, manual, nextTask }: Props
       )}
 
       <div className="flex-1 flex min-w-0 overflow-hidden">
-        {/* ── Left: Task info panel ── */}
+
+        {/* ━━━ Left: Task info panel ━━━ */}
         <div className="w-[300px] shrink-0 bg-white border-r border-gray-200 flex flex-col overflow-y-auto">
-          {/* Header */}
-          <div className="px-4 py-3.5 border-b border-gray-100">
+          {/* Back + Title */}
+          <div className="px-5 pt-4 pb-3 border-b border-gray-100">
             <Link
               href={user.role === "manager" ? "/manager" : "/dashboard"}
               className="inline-flex items-center gap-1 text-gray-400 hover:text-gray-600 text-xs mb-3 transition"
@@ -329,55 +370,57 @@ export default function TaskDetailClient({ task, user, manual, nextTask }: Props
               </svg>
               戻る
             </Link>
-            <h2 className="text-sm font-bold text-gray-800 leading-snug">{task.title}</h2>
+            <h2 className="text-[15px] font-bold text-gray-900 leading-snug">{task.title}</h2>
           </div>
 
-          <div className="p-4 space-y-4 flex-1">
+          <div className="px-5 py-4 space-y-5 flex-1">
             {/* Meta info */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
-                <span>{task.category}</span>
-              </div>
-              {task.due_date && (
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                  <span>期限: {formatDate(task.due_date)}</span>
+            <div className="space-y-2.5">
+              {[
+                { icon: <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>, label: task.category },
+                task.due_date ? { icon: <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>, label: `期限: ${formatDate(task.due_date)}` } : null,
+                task.started_at ? { icon: <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" /></svg>, label: `着手: ${formatDate(task.started_at)}` } : null,
+                task.completed_at ? { icon: <IconCheckCircle className="w-3.5 h-3.5 shrink-0 text-emerald-500" />, label: `完了: ${formatDate(task.completed_at)}`, color: "text-emerald-600" } : null,
+              ].filter(Boolean).map((item, i) => (
+                <div key={i} className={`flex items-center gap-2.5 text-xs ${(item as { color?: string }).color ?? "text-gray-500"}`}>
+                  <span className="text-gray-400">{(item as { icon: React.ReactNode }).icon}</span>
+                  <span>{(item as { label: string }).label}</span>
                 </div>
-              )}
-              {task.started_at && (
-                <div className="flex items-center gap-2 text-xs text-gray-500">
-                  <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>着手: {formatDate(task.started_at)}</span>
-                </div>
-              )}
-              {task.completed_at && (
-                <div className="flex items-center gap-2 text-xs text-emerald-600">
-                  <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <span>完了: {formatDate(task.completed_at)}</span>
-                </div>
-              )}
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <svg className="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span>{task.assignee_name}</span>
-              </div>
+              ))}
             </div>
+
+            {/* 担当者 */}
+            <div className="space-y-2">
+              <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider">担当者</p>
+              <div className="flex items-center gap-2.5">
+                <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                  {task.assignee_name?.charAt(0) ?? "?"}
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-800">{task.assignee_name}</p>
+                  <p className="text-[10px] text-gray-400">メイン担当</p>
+                </div>
+              </div>
+              {task.sub_assignee_name && (
+                <div className="flex items-center gap-2.5">
+                  <div className="w-6 h-6 rounded-full bg-orange-400 flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                    {task.sub_assignee_name.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-gray-800">{task.sub_assignee_name}</p>
+                    <p className="text-[10px] text-gray-400">サブ担当</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-gray-100" />
 
             {/* Status selector */}
             <div>
-              <p className="text-[11px] text-gray-400 font-medium mb-2">ステータス変更</p>
-              <div className="grid grid-cols-2 gap-1.5">
+              <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider mb-2">ステータス</p>
+              <div className="grid grid-cols-3 gap-1.5">
                 {statusOptions.map((s) => {
                   const cfg = STATUS_CONFIG[s as keyof typeof STATUS_CONFIG];
                   const isActive = status === s;
@@ -385,13 +428,12 @@ export default function TaskDetailClient({ task, user, manual, nextTask }: Props
                     <button
                       key={s}
                       onClick={() => updateStatus(s)}
-                      disabled={saving}
-                      className={`px-2 py-2.5 rounded-lg text-xs font-semibold border transition ${
-                        isActive ? cfg.active : cfg.btn + " hover:opacity-80"
-                      }`}
-                      style={{ minHeight: 44 }}
+                      disabled={saving || status === "完了"}
+                      className={`px-2 py-2 rounded-lg text-[11px] font-semibold border transition-all ${
+                        isActive ? cfg.active : cfg.btn
+                      } disabled:opacity-50`}
                     >
-                      <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1.5 ${cfg.dot}`} />
+                      <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${cfg.dot}`} />
                       {s}
                     </button>
                   );
@@ -404,11 +446,11 @@ export default function TaskDetailClient({ task, user, manual, nextTask }: Props
               <button
                 onClick={handleComplete}
                 disabled={completing}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-400 text-white font-bold py-4 rounded-2xl text-base transition active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-400 text-white font-bold py-3.5 rounded-xl text-sm transition active:scale-[0.98] flex items-center justify-center gap-2 shadow-sm"
               >
                 {completing ? (
                   <>
-                    <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                     </svg>
@@ -416,57 +458,96 @@ export default function TaskDetailClient({ task, user, manual, nextTask }: Props
                   </>
                 ) : (
                   <>
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                    </svg>
+                    <IconCheck className="w-4 h-4" />
                     このタスクを完了にする
                   </>
                 )}
               </button>
             ) : (
-              <div className="w-full bg-emerald-50 border-2 border-emerald-300 text-emerald-700 font-bold py-4 rounded-2xl text-base flex items-center justify-center gap-2">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                </svg>
+              <div className="w-full bg-emerald-50 border border-emerald-200 text-emerald-700 font-semibold py-3.5 rounded-xl text-sm flex items-center justify-center gap-2">
+                <IconCheckCircle className="w-4 h-4" />
                 完了済み
               </div>
             )}
+
+            {/* Divider */}
+            <div className="border-t border-gray-100" />
+
+            {/* Memo */}
+            <div>
+              <button
+                onClick={() => setMemoExpanded(v => !v)}
+                className="flex items-center justify-between w-full text-left group"
+              >
+                <p className="text-[11px] text-gray-400 font-medium uppercase tracking-wider group-hover:text-gray-500 transition">メモ・引き継ぎ</p>
+                <svg className={`w-3.5 h-3.5 text-gray-300 transition-transform ${memoExpanded ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {memoExpanded && (
+                <div className="mt-2 space-y-2">
+                  <textarea
+                    value={memo}
+                    onChange={e => setMemo(e.target.value)}
+                    placeholder="次の担当者への引き継ぎメモ..."
+                    rows={4}
+                    className="w-full rounded-lg px-3 py-2.5 text-sm text-gray-700 placeholder-gray-300 border border-gray-200 bg-gray-50/50 resize-none transition focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 focus:bg-white"
+                  />
+                  <div className="flex items-center justify-end gap-2">
+                    {saved && <span className="text-[11px] text-emerald-500 font-medium">保存しました</span>}
+                    <button
+                      onClick={saveMemo}
+                      disabled={saving}
+                      className="px-3 py-1.5 rounded-lg text-[11px] font-semibold bg-gray-100 text-gray-600 hover:bg-gray-200 disabled:opacity-50 transition"
+                    >
+                      {saving ? "保存中..." : "保存"}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {!memoExpanded && memo && (
+                <p className="text-[11px] text-gray-400 mt-1 truncate">{memo}</p>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* ── Right: UniGuide panel ── */}
-        <div className="flex-1 min-w-0 overflow-y-auto" style={{ backgroundColor: "#eff6ff" }}>
-          <div className="px-8 py-6">
+        {/* ━━━ Right: UniGuide panel ━━━ */}
+        <div className="flex-1 min-w-0 overflow-y-auto" style={{ backgroundColor: "#f8fafc" }}>
+          <div className="px-6 py-5">
+
             {/* UniGuide header */}
-            <div className="flex items-center gap-3 mb-6 pb-4 border-b border-blue-100">
-              <div className="w-10 h-10 bg-[#1a3a8f] rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
-                <span className="text-white text-lg">📖</span>
+            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-gray-200">
+              <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm">
+                <IconBook className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">UniGuide</p>
-                <p className="text-sm font-bold text-blue-900 leading-snug">{task.title}</p>
+                <p className="text-[10px] font-bold text-blue-600 tracking-widest">UNIGUIDE</p>
+                <p className="text-sm font-bold text-gray-900 leading-snug">{task.title}</p>
               </div>
             </div>
 
-            {hasPlaybook ? (
-              <div className="space-y-5">
+            {hasGuide ? (
+              <div className="space-y-4">
 
-                {/* 1. チェックポイント（最初に目に入る） */}
+                {/* 1. チェックポイント */}
                 {pitfalls.length > 0 && (
-                  <section>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 rounded-lg bg-red-100 flex items-center justify-center text-xs">⚠️</div>
-                      <h4 className="text-sm font-bold text-gray-700">チェックポイント</h4>
-                      <span className="text-xs text-gray-400 ml-1">— やってしまいがちな失敗</span>
+                  <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-2.5 px-5 py-3 border-b border-gray-100 bg-gray-50/50">
+                      <div className="w-6 h-6 rounded-lg bg-red-100 flex items-center justify-center">
+                        <IconShield className="w-3.5 h-3.5 text-red-600" />
+                      </div>
+                      <h4 className="text-sm font-bold text-gray-800">チェックポイント</h4>
+                      <span className="text-[11px] text-gray-400">よくある失敗・見落とし</span>
                     </div>
-                    <div className="space-y-2">
+                    <div className="divide-y divide-gray-50">
                       {pitfalls.map((p, i) => {
                         const sev = SEVERITY_STYLE[p.severity] ?? SEVERITY_STYLE.warning;
                         return (
-                          <div key={i} className={`flex items-start gap-3 p-3.5 rounded-xl border ${sev.bg} ${sev.border}`}>
-                            <span className="text-base shrink-0 mt-0.5">{sev.icon}</span>
-                            <div className="flex-1">
-                              <span className={`text-[15px] font-bold ${sev.text}`}>{sev.label}</span>
+                          <div key={i} className="flex items-start gap-3 px-5 py-3.5">
+                            <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${sev.dot}`} />
+                            <div className="flex-1 min-w-0">
+                              <span className={`text-[10px] font-bold uppercase tracking-wider ${sev.text}`}>{sev.label}</span>
                               <p className="text-sm text-gray-700 leading-relaxed mt-0.5">{p.text}</p>
                             </div>
                           </div>
@@ -476,16 +557,19 @@ export default function TaskDetailClient({ task, user, manual, nextTask }: Props
                   </section>
                 )}
 
-                {/* 2. 着手条件チェック */}
+                {/* 2. 着手条件 */}
                 {conditions.length > 0 && (
-                  <section>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs ${allChecked ? "bg-emerald-100" : "bg-orange-100"}`}>
-                        {allChecked ? "✅" : "🔑"}
+                  <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-2.5 px-5 py-3 border-b border-gray-100 bg-gray-50/50">
+                      <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${allChecked ? "bg-emerald-100" : "bg-orange-100"}`}>
+                        {allChecked
+                          ? <IconCheckCircle className="w-3.5 h-3.5 text-emerald-600" />
+                          : <IconKey className="w-3.5 h-3.5 text-orange-600" />
+                        }
                       </div>
-                      <h4 className="text-sm font-bold text-gray-700">着手条件</h4>
-                      <span className="text-xs text-gray-400 ml-1">— 着手前に必ず確認</span>
-                      <span className={`text-xs font-semibold ml-auto px-2 py-0.5 rounded-full ${
+                      <h4 className="text-sm font-bold text-gray-800">着手条件</h4>
+                      <span className="text-[11px] text-gray-400">着手前に必ず確認</span>
+                      <span className={`text-[11px] font-bold ml-auto px-2 py-0.5 rounded-full ${
                         allChecked
                           ? "bg-emerald-100 text-emerald-700"
                           : checkedCount > 0
@@ -495,23 +579,23 @@ export default function TaskDetailClient({ task, user, manual, nextTask }: Props
                         {checkedCount}/{conditions.length}
                       </span>
                     </div>
-                    <div className="space-y-1.5">
+                    <div className="p-3 space-y-1">
                       {conditions.map((c, i) => {
                         const checked = checkedConditions[i] ?? false;
                         return (
                           <button
                             key={i}
                             onClick={() => toggleCondition(i)}
-                            className={`w-full flex items-start gap-2.5 px-3 py-2.5 rounded-xl border text-left transition-all ${
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all ${
                               checked
-                                ? "bg-emerald-50 border-emerald-200"
-                                : "bg-orange-50/50 border-orange-100 hover:bg-orange-50"
+                                ? "bg-emerald-50/70"
+                                : "hover:bg-gray-50"
                             }`}
                           >
-                            <div className={`w-4 h-4 rounded flex-shrink-0 mt-0.5 flex items-center justify-center transition-all ${
+                            <div className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center transition-all border ${
                               checked
-                                ? "bg-emerald-500 border-2 border-emerald-500"
-                                : "border-2 border-orange-200"
+                                ? "bg-emerald-500 border-emerald-500"
+                                : "bg-white border-gray-300"
                             }`}>
                               {checked && (
                                 <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -519,7 +603,7 @@ export default function TaskDetailClient({ task, user, manual, nextTask }: Props
                                 </svg>
                               )}
                             </div>
-                            <span className={`text-sm transition-colors ${checked ? "text-emerald-700 line-through" : "text-gray-700"}`}>
+                            <span className={`text-sm transition-colors ${checked ? "text-gray-400 line-through" : "text-gray-700"}`}>
                               {c}
                             </span>
                           </button>
@@ -527,109 +611,122 @@ export default function TaskDetailClient({ task, user, manual, nextTask }: Props
                       })}
                     </div>
                     {allChecked && (
-                      <p className="text-xs text-emerald-600 font-medium mt-2 text-center">
-                        ✓ すべての着手条件を確認しました
-                      </p>
+                      <div className="px-5 pb-3">
+                        <div className="flex items-center gap-1.5 text-xs text-emerald-600 font-medium bg-emerald-50 rounded-lg px-3 py-2">
+                          <IconCheckCircle className="w-3.5 h-3.5" />
+                          すべての着手条件を確認しました
+                        </div>
+                      </div>
                     )}
                   </section>
                 )}
 
                 {/* 3. 判断ガイド */}
                 {criteria.length > 0 && (
-                  <section>
-                    <div className="flex items-center gap-2 mb-3">
-                      <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center text-xs">⚖️</div>
-                      <h4 className="text-sm font-bold text-gray-700">判断ガイド</h4>
-                      <span className="text-xs text-gray-400 ml-1">— 迷ったときの判断基準</span>
+                  <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="flex items-center gap-2.5 px-5 py-3 border-b border-gray-100 bg-gray-50/50">
+                      <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <IconScale className="w-3.5 h-3.5 text-blue-600" />
+                      </div>
+                      <h4 className="text-sm font-bold text-gray-800">判断ガイド</h4>
+                      <span className="text-[11px] text-gray-400">迷ったときの判断基準</span>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
-                      {criteria.map((c, i) => (
-                        <div key={i} className="bg-white rounded-xl p-3.5 border border-gray-100 shadow-sm">
-                          <p className="text-sm font-bold text-[#1a3a8f] mb-1.5">Q. {c.q}</p>
-                          {c.a && <p className="text-sm text-gray-600 leading-relaxed">→ {c.a}</p>}
-                        </div>
-                      ))}
+                    <div className="p-4">
+                      <div className={`grid gap-3 ${criteria.length === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
+                        {criteria.map((c, i) => (
+                          <div key={i} className="rounded-lg border border-gray-100 bg-gray-50/50 p-4">
+                            <p className="text-sm font-semibold text-blue-600 mb-1.5">Q. {c.q}</p>
+                            {c.a && <p className="text-sm text-gray-600 leading-relaxed">{c.a}</p>}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </section>
                 )}
 
-                {/* 4. ひとことポイント（締め） */}
+                {/* 4. ひとことポイント */}
                 {task.playbook_tip && (
-                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-lg">💡</span>
-                      <span className="font-semibold text-blue-900 text-sm">ひとことポイント</span>
+                  <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="flex items-start gap-3 px-5 py-4">
+                      <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center shrink-0 mt-0.5">
+                        <IconLightBulb className="w-3.5 h-3.5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-bold text-blue-600 tracking-wider mb-1">ポイント</p>
+                        <p className="text-sm text-gray-700 leading-relaxed">{task.playbook_tip}</p>
+                      </div>
                     </div>
-                    <p className="text-blue-900 text-sm leading-relaxed">
-                      &ldquo;{task.playbook_tip}&rdquo;
-                    </p>
-                  </div>
+                  </section>
                 )}
 
-                {/* Manual inline accordion */}
+                {/* 5. 内部マニュアル */}
                 {manual ? (
-                  <div className="bg-white border border-blue-100 rounded-xl shadow-sm overflow-hidden">
+                  <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
                     <button
                       onClick={() => setManualOpen(v => !v)}
-                      className="flex items-center justify-between w-full px-4 py-3 hover:bg-blue-50 transition group"
+                      className="flex items-center justify-between w-full px-5 py-3.5 hover:bg-gray-50 transition group"
                     >
-                      <div className="flex items-center gap-2">
-                        <svg className="w-5 h-5 text-[#1a3a8f]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center">
+                          <IconBook className="w-3.5 h-3.5 text-gray-500" />
+                        </div>
                         <div className="text-left">
-                          <span className="text-sm font-medium text-gray-700">内部マニュアル</span>
-                          <span className="text-xs text-[#1a3a8f] ml-2">{manual.title}</span>
+                          <span className="text-sm font-semibold text-gray-700">内部マニュアル</span>
+                          <span className="text-[11px] text-blue-600 ml-2">{manual.title}</span>
                         </div>
                       </div>
                       <svg
-                        className={`w-4 h-4 text-blue-400 transition-transform ${manualOpen ? "rotate-180" : ""}`}
+                        className={`w-4 h-4 text-gray-400 transition-transform ${manualOpen ? "rotate-180" : ""}`}
                         fill="none" viewBox="0 0 24 24" stroke="currentColor"
                       >
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </button>
                     {manualOpen && (
-                      <div className="border-t border-blue-100 px-5 py-4">
+                      <div className="border-t border-gray-100 px-5 py-4">
                         <div
                           className="space-y-1"
                           dangerouslySetInnerHTML={{ __html: renderMarkdown(manual.content) }}
                         />
                         <div className="mt-4 pt-3 border-t border-gray-100">
-                          <Link
-                            href="/manuals"
-                            className="text-xs text-[#1a3a8f] hover:underline font-medium"
-                          >
-                            マニュアル一覧を見る →
+                          <Link href="/manuals" className="text-xs text-blue-600 hover:text-blue-700 hover:underline font-medium">
+                            マニュアル一覧を見る
+                            <svg className="w-3 h-3 inline ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                           </Link>
                         </div>
                       </div>
                     )}
-                  </div>
+                  </section>
                 ) : (
                   <Link
                     href="/manuals"
-                    className="flex items-center justify-between w-full bg-white hover:bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 transition group shadow-sm"
+                    className="flex items-center justify-between w-full bg-white hover:bg-gray-50 border border-gray-200 rounded-xl px-5 py-3.5 transition group shadow-sm"
                   >
-                    <div className="flex items-center gap-2">
-                      <svg className="w-5 h-5 text-[#1a3a8f]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                      </svg>
-                      <span className="text-sm font-medium text-gray-700">内部マニュアルを見る</span>
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-6 h-6 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <IconBook className="w-3.5 h-3.5 text-gray-500" />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-700">内部マニュアルを見る</span>
                     </div>
-                    <span className="text-[#1a3a8f] text-sm font-bold group-hover:translate-x-1 transition-transform">→</span>
+                    <svg className="w-4 h-4 text-gray-300 group-hover:text-blue-500 group-hover:translate-x-0.5 transition-all" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                    </svg>
                   </Link>
                 )}
               </div>
             ) : (
-              <div className="text-center py-16 text-gray-400">
-                <span className="text-4xl mb-4 block">📖</span>
-                <p className="text-sm">このタスクの進行ガイドはまだ登録されていません</p>
+              <div className="text-center py-20 text-gray-400">
+                <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-gray-100 flex items-center justify-center">
+                  <IconBook className="w-6 h-6 text-gray-300" />
+                </div>
+                <p className="text-sm font-medium text-gray-500 mb-1">業務ガイド未登録</p>
+                <p className="text-xs text-gray-400">このタスクのガイドはまだ登録されていません</p>
                 <Link
                   href="/manuals"
-                  className="inline-flex items-center gap-1 mt-4 text-[#1a3a8f] text-xs font-medium hover:underline"
+                  className="inline-flex items-center gap-1 mt-4 text-blue-600 text-xs font-medium hover:text-blue-700 hover:underline"
                 >
-                  マニュアル一覧を見る →
+                  マニュアル一覧を見る
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                 </Link>
               </div>
             )}

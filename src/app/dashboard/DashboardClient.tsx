@@ -15,7 +15,11 @@ interface Task {
   status: string;
   start_date: string | null;
   due_date: string;
+  completed_at: string | null;
+  assignee_id: number;
   assignee_name: string;
+  sub_assignee_id: number | null;
+  sub_assignee_name: string | null;
   playbook_conditions: string;
   playbook_criteria: string;
   playbook_pitfalls: string;
@@ -120,7 +124,12 @@ export default function DashboardClient({
 
   const alertTaskIds = new Set([...todayTasks.map(t => t.id), ...tomorrowTasks.map(t => t.id)]);
   const allShownTasks = selectedCategory ? categories[selectedCategory]?.tasks ?? [] : tasks;
-  const shownTasks = showCompleted ? allShownTasks : allShownTasks.filter(t => t.status !== "完了");
+  const shownTasks = (() => {
+    const active = allShownTasks.filter(t => t.status !== "完了");
+    if (!showCompleted) return active;
+    const done = allShownTasks.filter(t => t.status === "完了").sort((a, b) => (b.completed_at ?? "").localeCompare(a.completed_at ?? ""));
+    return [...active, ...done];
+  })();
   const completedCount = allShownTasks.filter(t => t.status === "完了").length;
 
   const totalTasks = tasks.length;
@@ -559,7 +568,7 @@ export default function DashboardClient({
               <div className="flex-1 overflow-y-auto p-6">
                 {/* 今日やること */}
                 {todayTasks.length > 0 && (
-                  <div className="max-w-[680px] mb-7">
+                  <div className="mb-7">
                     <div className="flex items-center gap-2 mb-3">
                       <span className="w-2 h-2 rounded-full bg-red-500 " />
                       <h3 className="text-xs font-bold text-gray-700 tracking-wide">今日やること</h3>
@@ -590,7 +599,7 @@ export default function DashboardClient({
                   </div>
                 )}
 
-                <div className="max-w-[680px] space-y-2">
+                <div className="space-y-2">
                   {shownTasks.map(task => {
                     const st = STATUS_CONFIG[task.status as keyof typeof STATUS_CONFIG] ?? STATUS_CONFIG["未着手"];
                     const isAlert = alertTaskIds.has(task.id);
@@ -612,24 +621,29 @@ export default function DashboardClient({
                       task.status === "確認待ち"? "#f59e0b" :
                       isOverdue               ? "#ef4444" : "#d1d5db";
 
+                    const isSub = task.assignee_id !== user.id && task.sub_assignee_id === user.id;
+
                     return (
                       <Link key={task.id} href={`/tasks/${task.id}`}>
                         <div
-                          className={`flex items-start gap-3 pl-0 pr-4 py-0 rounded-xl transition-all bg-white border group overflow-hidden ${
-                            isAlert
-                              ? "border-red-200 hover:border-red-300 hover:shadow-md hover:shadow-red-500/10"
-                              : task.status === "完了"
-                              ? "border-gray-100 hover:border-gray-200"
-                              : "border-gray-100 hover:border-blue-200 hover:shadow-md hover:shadow-blue-500/10"
+                          className={`flex items-start gap-3 pl-0 pr-4 py-0 rounded-xl transition-all border group overflow-hidden ${
+                            task.status === "完了"
+                              ? "bg-gray-100 border-gray-200 opacity-60 hover:opacity-80"
+                              : isAlert
+                              ? "bg-white border-red-200 hover:border-red-300 hover:shadow-md hover:shadow-red-500/10"
+                              : isSub
+                              ? "bg-gray-50/80 border-gray-200 hover:border-gray-300 hover:shadow-sm"
+                              : "bg-white border-gray-100 hover:border-blue-200 hover:shadow-md hover:shadow-blue-500/10"
                           }`}
                         >
                           {/* Left accent bar */}
-                          <div className="w-1 self-stretch shrink-0 rounded-l-xl" style={{ backgroundColor: accentColor }} />
+                          <div className="w-1 self-stretch shrink-0 rounded-l-xl" style={{ backgroundColor: isSub ? "#9ca3af" : accentColor }} />
 
                           {/* Content */}
                           <div className="flex-1 min-w-0 py-3">
                             <div className="flex items-center gap-2">
                               <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-md shrink-0 ${st.badge}`}>{st.label}</span>
+                              {isSub && <span className="text-[9px] font-bold text-gray-400 bg-gray-100 border border-gray-200 px-1.5 py-0.5 rounded-md shrink-0">サブ</span>}
                               <span className={`text-[13px] flex-1 min-w-0 truncate font-medium ${
                                 task.status === "完了" ? "line-through text-gray-400"
                                 : isOverdue ? "text-red-600 font-semibold"
@@ -657,6 +671,11 @@ export default function DashboardClient({
                                 todayTasks.some(t => t.id === task.id) ? "bg-red-500" : "bg-amber-400"
                               }`}>
                                 {todayTasks.some(t => t.id === task.id) ? "今日" : "明日"}
+                              </span>
+                            )}
+                            {task.status === "完了" && task.completed_at && (
+                              <span className="text-[11px] tabular-nums font-medium text-gray-400">
+                                {formatDate(task.completed_at)}完了
                               </span>
                             )}
                             {task.due_date && task.status !== "完了" && (
@@ -732,9 +751,14 @@ export default function DashboardClient({
           const gAnnIdx   = ganttDays.indexOf(ANNOUNCEMENT_DATE);
           const gVoteIdx  = ganttDays.indexOf(VOTE_DATE);
 
-          const barCls = (status: string, isOverdue: boolean) => {
+          const barCls = (status: string, isOverdue: boolean, isSub: boolean) => {
             if (isOverdue)             return "bg-red-50 border-2 border-red-400";
             if (status === "完了")     return "border border-emerald-400";
+            if (isSub) {
+              if (status === "進行中")   return "bg-orange-50 border border-orange-300";
+              if (status === "確認待ち") return "bg-orange-50/50 border border-orange-200";
+              return "bg-orange-50/30 border border-orange-200";
+            }
             if (status === "進行中")   return "bg-blue-50 border border-blue-400";
             if (status === "確認待ち") return "bg-amber-50 border border-amber-400";
             return "bg-slate-100 border border-slate-300";
@@ -793,6 +817,10 @@ export default function DashboardClient({
               <div className="flex items-center gap-1.5">
                 <span className="w-8 h-3.5 rounded-full shrink-0 border border-emerald-400" style={{ background: "repeating-linear-gradient(45deg,rgba(16,185,129,.18),rgba(16,185,129,.18) 3px,rgba(209,250,229,.6) 3px,rgba(209,250,229,.6) 9px)" }} />
                 <span className="text-[11px] text-emerald-700 font-semibold">完了</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-8 h-3.5 rounded-full shrink-0 bg-orange-50 border border-orange-300" />
+                <span className="text-[11px] text-orange-700 font-semibold">サブ担当</span>
               </div>
               <div className="ml-auto flex items-center gap-1.5 shrink-0">
                 <span className="text-[11px] text-gray-500">完了タスクを表示</span>
@@ -905,14 +933,20 @@ export default function DashboardClient({
                           : task.status === "完了"     ? "完了"
                           : "未着手";
 
+                        const isSub = task.assignee_id !== user.id && task.sub_assignee_id === user.id;
+
                         return (
                           <Link key={task.id} href={`/tasks/${task.id}`}>
-                            <div className={`flex border-b border-gray-50 hover:bg-blue-50/25 transition group cursor-pointer ${isComplete ? "opacity-55" : ""}`}>
-                              <div className="shrink-0 border-r-2 border-gray-200 px-3 py-1.5 flex items-center gap-2 sticky left-0 z-30 bg-white group-hover:bg-blue-50 pl-5" style={{ width: GLEFT }}>
-                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${dotColor(task.status, isOverdue)}`} />
-                                <span className={`text-[11px] leading-tight flex-1 truncate ${isOverdue ? "text-red-600 font-semibold" : isComplete ? "text-gray-400 line-through" : "text-gray-800"}`}>
+                            <div className={`flex border-b border-gray-50 transition group cursor-pointer ${isComplete ? "opacity-55" : ""} ${isSub ? "hover:bg-orange-50/40" : "hover:bg-blue-50/25"}`}>
+                              <div className={`shrink-0 border-r-2 border-gray-200 py-1.5 flex items-center gap-2 sticky left-0 z-30 ${isSub ? "bg-orange-50 group-hover:bg-orange-100 pl-0 pr-3" : "bg-white group-hover:bg-blue-50 px-3 pl-5"}`} style={{ width: GLEFT }}>
+                                {isSub && <div className="w-[3px] self-stretch bg-orange-400 rounded-r shrink-0" />}
+                                <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${!isSub ? "ml-0" : "ml-2"} ${isSub ? "bg-orange-400" : dotColor(task.status, isOverdue)}`} />
+                                <span className={`text-[11px] leading-tight flex-1 truncate ${isOverdue ? "text-red-600 font-semibold" : isComplete ? "text-gray-400 line-through" : isSub ? "text-orange-700" : "text-gray-800"}`}>
                                   {task.title}
                                 </span>
+                                {isSub && (
+                                  <span className="text-[9px] font-bold text-orange-600 bg-orange-100 border border-orange-200 px-1.5 py-0.5 rounded shrink-0">サブ</span>
+                                )}
                               </div>
                               <div className="flex-1 relative" style={{ minHeight: 32 }}>
                                 {milestones}
@@ -920,7 +954,7 @@ export default function DashboardClient({
                                   const labelOffset = Math.max(0, ganttScrollLeft - barLeft);
                                   return (
                                     <div
-                                      className={`absolute top-1/2 -translate-y-1/2 h-[22px] z-[5] overflow-hidden ${barCls(task.status, isOverdue)} ${clampedStart ? "rounded-r-full" : "rounded-full"}`}
+                                      className={`absolute top-1/2 -translate-y-1/2 h-[22px] z-[5] overflow-hidden ${barCls(task.status, isOverdue, isSub)} ${clampedStart ? "rounded-r-full" : "rounded-full"}`}
                                       style={{ left: barLeft, width: barW, ...barInlineStyle(task.status) }}
                                     >
                                       <div
@@ -1026,7 +1060,7 @@ export default function DashboardClient({
 
           return (
             <div className="flex-1 overflow-y-auto" style={{ backgroundColor: "#f8fafc" }}>
-              <div className="px-6 py-5 max-w-[1080px] mx-auto">
+              <div className="px-6 py-5">
 
                 {/* ── タイムラインヘッダー ── */}
                 <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-2xl p-5 mb-6 text-white">

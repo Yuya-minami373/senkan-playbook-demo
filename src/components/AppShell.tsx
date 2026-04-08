@@ -225,13 +225,13 @@ export default function AppShell({
               </div>
               <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                 <div className="h-full flex">
-                  <div className="bg-blue-600 rounded-l-full" style={{ width: `${progressCompleted}%` }} />
+                  <div className="bg-emerald-500 rounded-l-full" style={{ width: `${progressCompleted}%` }} />
                   <div className="bg-blue-300" style={{ width: `${progressInProgress}%` }} />
                 </div>
               </div>
               <div className="flex gap-3 mt-1.5">
                 <span className="flex items-center gap-1 text-[9px] text-gray-400">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue-600 inline-block" />完了
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />完了
                 </span>
                 <span className="flex items-center gap-1 text-[9px] text-gray-400">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-300 inline-block" />進行中

@@ -392,7 +392,7 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
                               </span>
                               <span className="text-xs text-gray-800 font-medium flex-1 truncate">{task.title}</span>
                               <span className="text-[10px] text-gray-400 shrink-0">{task.category}</span>
-                              <span className="text-[10px] text-gray-500 shrink-0">{task.assignee_name?.split(" ")[0]}</span>
+                              <span className="text-[10px] text-gray-500 shrink-0">{task.assignee_name?.split(" ")[0]}{task.sub_assignee_name ? ` +${task.sub_assignee_name.split(" ")[0]}` : ""}</span>
                             </div>
                           </Link>
                         ))}
@@ -421,7 +421,7 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
                           <span className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
                           <span className="text-xs text-gray-800 font-medium flex-1 truncate">{task.title}</span>
                           <span className="text-[10px] text-gray-400 shrink-0">{task.category}</span>
-                          <span className="text-[10px] text-gray-500 shrink-0">{task.assignee_name?.split(" ")[0]}</span>
+                          <span className="text-[10px] text-gray-500 shrink-0">{task.assignee_name?.split(" ")[0]}{task.sub_assignee_name ? ` +${task.sub_assignee_name.split(" ")[0]}` : ""}</span>
                           <span className="text-[10px] text-gray-400 shrink-0 tabular-nums">{formatMMDD(task.due_date)}</span>
                         </div>
                       </Link>
@@ -461,7 +461,7 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
                                       <span className="text-emerald-500 text-xs shrink-0">✓</span>
                                       <span className="text-xs text-gray-800 font-medium flex-1 truncate">{task.title}</span>
                                       <span className="text-[10px] text-gray-400 shrink-0">{task.category}</span>
-                                      <span className="text-[10px] text-gray-400 shrink-0">{task.assignee_name?.split(" ")[0]}</span>
+                                      <span className="text-[10px] text-gray-400 shrink-0">{task.assignee_name?.split(" ")[0]}{task.sub_assignee_name ? ` +${task.sub_assignee_name.split(" ")[0]}` : ""}</span>
                                       {task.effort_label && (
                                         <span className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full font-medium shrink-0">{task.effort_label}</span>
                                       )}
@@ -481,7 +481,7 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
                                       <span className="text-slate-400 text-xs shrink-0">✓</span>
                                       <span className="text-xs text-gray-600 flex-1 truncate">{task.title}</span>
                                       <span className="text-[10px] text-gray-400 shrink-0">{task.category}</span>
-                                      <span className="text-[10px] text-gray-400 shrink-0">{task.assignee_name?.split(" ")[0]}</span>
+                                      <span className="text-[10px] text-gray-400 shrink-0">{task.assignee_name?.split(" ")[0]}{task.sub_assignee_name ? ` +${task.sub_assignee_name.split(" ")[0]}` : ""}</span>
                                       {task.effort_label && (
                                         <span className="text-[9px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded-full font-medium shrink-0">{task.effort_label}</span>
                                       )}
@@ -533,9 +533,14 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
             const gVoteIdx  = ganttDays.indexOf(VOTE_DATE);
 
             // ステータス別バースタイル（薄め背景 + ボーダー）
-            const barCls = (status: string, isOverdue: boolean) => {
+            const barCls = (status: string, isOverdue: boolean, isSub = false) => {
               if (isOverdue)             return "bg-red-50 border-2 border-red-400";
-              if (status === "完了")     return "border border-emerald-400" // 完了はパターン塗り（inline）
+              if (status === "完了")     return "border border-emerald-400";
+              if (isSub) {
+                if (status === "進行中")   return "bg-orange-50 border border-orange-300";
+                if (status === "確認待ち") return "bg-orange-50/50 border border-orange-200";
+                return "bg-orange-50/30 border border-orange-200";
+              }
               if (status === "進行中")   return "bg-blue-50 border border-blue-400";
               if (status === "確認待ち") return "bg-amber-50 border border-amber-400";
               return "bg-slate-100 border border-slate-300";
@@ -584,6 +589,10 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
                   <div className="flex items-center gap-1.5">
                     <span className="w-8 h-3.5 rounded-full shrink-0 border border-emerald-400" style={{ background: "repeating-linear-gradient(45deg,rgba(16,185,129,.18),rgba(16,185,129,.18) 3px,rgba(209,250,229,.6) 3px,rgba(209,250,229,.6) 9px)" }} />
                     <span className="text-[11px] text-emerald-700 font-semibold">完了</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-8 h-3.5 rounded-full shrink-0 bg-orange-50 border border-orange-300" />
+                    <span className="text-[11px] text-orange-700 font-semibold">サブ担当</span>
                   </div>
                   <div className="ml-auto flex items-center gap-1.5 shrink-0">
                     <span className="text-[11px] text-gray-500">完了タスクを表示</span>
@@ -649,7 +658,7 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
 
                     {/* ━ 職員別タスク行 ━ */}
                     {staffUsers.map(staff => {
-                      const staffTasks = tasks.filter(t => t.assignee_id === staff.id);
+                      const staffTasks = tasks.filter(t => t.assignee_id === staff.id || t.sub_assignee_id === staff.id);
                       const visibleTasks = staffTasks.filter(t => showCompleted || t.status !== "完了");
                       if (visibleTasks.length === 0) return null;
 
@@ -712,15 +721,19 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
                               : task.status === "完了"     ? "完了"
                               : "未着手";
 
+                            const isSub = task.assignee_id !== staff.id && task.sub_assignee_id === staff.id;
+
                             return (
                               <Link key={task.id} href={`/tasks/${task.id}`}>
-                                <div className={`flex border-b border-gray-50 hover:bg-blue-50/25 transition group cursor-pointer ${isComplete ? "opacity-55" : ""}`}>
+                                <div className={`flex border-b border-gray-50 transition group cursor-pointer ${isComplete ? "opacity-55" : ""} ${isSub ? "hover:bg-orange-50/40" : "hover:bg-blue-50/25"}`}>
                                   {/* 左パネル */}
-                                  <div className="shrink-0 border-r-2 border-gray-200 px-3 py-1.5 flex items-center gap-2 sticky left-0 z-30 bg-white group-hover:bg-blue-50" style={{ width: GLEFT }}>
-                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ml-5 ${dotColor(task.status, isOverdue)}`} />
-                                    <span className={`text-[11px] leading-tight flex-1 truncate ${isOverdue ? "text-red-600 font-semibold" : isComplete ? "text-gray-400 line-through" : "text-gray-800"}`}>
+                                  <div className={`shrink-0 border-r-2 border-gray-200 py-1.5 flex items-center gap-2 sticky left-0 z-30 ${isSub ? "bg-orange-50 group-hover:bg-orange-100 pl-0 pr-3" : "bg-white group-hover:bg-blue-50 px-3"}`} style={{ width: GLEFT }}>
+                                    {isSub ? <div className="w-[3px] self-stretch bg-orange-400 rounded-r shrink-0" /> : null}
+                                    <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isSub ? "ml-2" : "ml-5"} ${isSub ? "bg-orange-400" : dotColor(task.status, isOverdue)}`} />
+                                    <span className={`text-[11px] leading-tight flex-1 truncate ${isOverdue ? "text-red-600 font-semibold" : isComplete ? "text-gray-400 line-through" : isSub ? "text-orange-700" : "text-gray-800"}`}>
                                       {task.title}
                                     </span>
+                                    {isSub && <span className="text-[9px] font-bold text-orange-600 bg-orange-100 border border-orange-200 px-1.5 py-0.5 rounded shrink-0">サブ</span>}
                                   </div>
 
                                   {/* バーエリア */}
@@ -730,7 +743,7 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
                                       const labelOffset = Math.max(0, ganttScrollLeft - barLeft);
                                       return (
                                         <div
-                                          className={`absolute top-1/2 -translate-y-1/2 h-[22px] z-[5] overflow-hidden ${barCls(task.status, isOverdue)} ${clampedStart ? "rounded-r-full" : "rounded-full"}`}
+                                          className={`absolute top-1/2 -translate-y-1/2 h-[22px] z-[5] overflow-hidden ${barCls(task.status, isOverdue, isSub)} ${clampedStart ? "rounded-r-full" : "rounded-full"}`}
                                           style={{ left: barLeft, width: barW, ...barInlineStyle(task.status, isOverdue) }}
                                         >
                                           <div
@@ -1279,14 +1292,14 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
                             <td className="px-5 py-3 text-sm font-medium text-slate-800">{w.cat}</td>
                             <td className="px-5 py-3 text-sm text-slate-600 tabular-nums">{w.done}件</td>
                             <td className="px-5 py-3">
-                              <span className="text-sm font-black text-violet-600 tabular-nums">{w.actualH.toFixed(1)}h</span>
+                              <span className="text-sm font-black text-orange-600 tabular-nums">{w.actualH.toFixed(1)}h</span>
                               {w.hasActual && <span className="text-[9px] text-violet-400 ml-1">実績</span>}
                             </td>
                             <td className="px-5 py-3 text-sm text-slate-500 tabular-nums">{avg.toFixed(1)}h/件</td>
                             <td className="px-5 py-3">
                               <div className="flex items-center gap-2">
                                 <div className="w-32 h-2 bg-slate-100 rounded-full overflow-hidden">
-                                  <div className="h-full bg-violet-400 rounded-full" style={{ width: `${(w.actualH / barMax) * 100}%` }} />
+                                  <div className="h-full bg-orange-400 rounded-full" style={{ width: `${(w.actualH / barMax) * 100}%` }} />
                                 </div>
                               </div>
                             </td>
