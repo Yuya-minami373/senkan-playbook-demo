@@ -1,6 +1,6 @@
 import { redirect, notFound } from "next/navigation";
 import { getSession } from "@/lib/auth";
-import { queryOne } from "@/lib/db";
+import { queryOne, query } from "@/lib/db";
 import { initDb } from "@/lib/db";
 import TaskDetailClient from "./TaskDetailClient";
 
@@ -73,5 +73,10 @@ export default async function TaskDetailPage({
     LIMIT 1
   `, [task.category, task.id, task.assignee_id]) ?? null;
 
-  return <TaskDetailClient task={task} user={session} manual={manual} nextTask={nextTask} />;
+  const kians = query<{ id: number; title: string; due_timing: string | null; status: string; note: string | null }>(
+    `SELECT id, title, due_timing, status, note FROM kians WHERE task_id = ?`,
+    [task.id]
+  );
+
+  return <TaskDetailClient task={task} user={session} manual={manual} nextTask={nextTask} kians={kians} />;
 }

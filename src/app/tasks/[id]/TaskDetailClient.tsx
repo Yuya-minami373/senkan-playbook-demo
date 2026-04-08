@@ -38,11 +38,20 @@ interface NextTask {
   due_date: string;
 }
 
+interface KianItem {
+  id: number;
+  title: string;
+  due_timing: string | null;
+  status: string;
+  note: string | null;
+}
+
 interface Props {
   task: Task;
   user: User;
   manual: Manual | null;
   nextTask: NextTask | null;
+  kians?: KianItem[];
 }
 
 /* ── SVG Icons ── */
@@ -191,7 +200,7 @@ function parseCriteria(raw: string): CriteriaItem[] {
   return [];
 }
 
-export default function TaskDetailClient({ task, user, manual, nextTask }: Props) {
+export default function TaskDetailClient({ task, user, manual, nextTask, kians = [] }: Props) {
   const router = useRouter();
   const [status, setStatus] = useState(task.status);
   const [memo, setMemo] = useState(task.memo || "");
@@ -203,6 +212,10 @@ export default function TaskDetailClient({ task, user, manual, nextTask }: Props
   const [manualOpen, setManualOpen] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [memoExpanded, setMemoExpanded] = useState(false);
+  const [kianOpen, setKianOpen] = useState(true);
+  const [kianStatuses, setKianStatuses] = useState<Record<number, string>>(
+    () => Object.fromEntries(kians.map(k => [k.id, k.status]))
+  );
 
   const conditions: string[] = JSON.parse(task.playbook_conditions || "[]");
 
@@ -526,6 +539,75 @@ export default function TaskDetailClient({ task, user, manual, nextTask }: Props
                 <p className="text-sm font-bold text-gray-900 leading-snug">{task.title}</p>
               </div>
             </div>
+
+            {/* 関連起案（トップ表示） */}
+            {kians.length > 0 && (
+              <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden mb-4">
+                <button
+                  onClick={() => setKianOpen(v => !v)}
+                  className="flex items-center gap-2.5 px-5 py-3 border-b border-gray-100 bg-gray-50/50 w-full text-left hover:bg-gray-50 transition"
+                >
+                  <svg className={`w-3.5 h-3.5 text-gray-400 transition-transform shrink-0 ${kianOpen ? "" : "-rotate-90"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  <div className="w-6 h-6 rounded-lg bg-amber-100 flex items-center justify-center">
+                    <svg className="w-3.5 h-3.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15a2.25 2.25 0 012.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z" />
+                    </svg>
+                  </div>
+                  <h4 className="text-sm font-bold text-gray-800">関連起案</h4>
+                  <span className="ml-auto text-[11px] font-bold text-gray-400">{kians.length}件</span>
+                </button>
+                {kianOpen && <div className="divide-y divide-gray-50">
+                  {kians.map(k => {
+                    const currentStatus = kianStatuses[k.id] ?? k.status;
+
+                    async function updateKianStatus(newStatus: string) {
+                      setKianStatuses(prev => ({ ...prev, [k.id]: newStatus }));
+                      await fetch(`/api/kians/${k.id}`, {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ status: newStatus }),
+                      });
+                    }
+
+                    const KIAN_STATUSES = [
+                      { value: "未着手", dot: "bg-gray-400", active: "bg-gray-600 text-white border-gray-600", inactive: "bg-white text-gray-500 border-gray-200 hover:border-gray-300" },
+                      { value: "起案済", dot: "bg-blue-500", active: "bg-blue-600 text-white border-blue-600", inactive: "bg-white text-blue-600 border-gray-200 hover:border-blue-300" },
+                      { value: "決裁済", dot: "bg-emerald-500", active: "bg-emerald-600 text-white border-emerald-600", inactive: "bg-white text-emerald-600 border-gray-200 hover:border-emerald-300" },
+                    ];
+
+                    return (
+                      <div key={k.id} className="px-5 py-3">
+                        <div className="flex items-center gap-3 mb-2">
+                          <p className={`text-sm font-medium flex-1 ${currentStatus === "決裁済" ? "text-gray-400 line-through" : "text-gray-800"}`}>{k.title}</p>
+                          {k.due_timing && (
+                            <span className={`text-[11px] font-medium shrink-0 px-2 py-0.5 rounded-lg ${
+                              currentStatus === "決裁済" ? "bg-gray-50 text-gray-400" : "bg-orange-50 text-orange-600 border border-orange-100"
+                            }`}>{k.due_timing}</span>
+                          )}
+                        </div>
+                        {k.note && <p className="text-[11px] text-gray-400 mb-2">{k.note}</p>}
+                        <div className="flex gap-1.5">
+                          {KIAN_STATUSES.map(s => (
+                            <button
+                              key={s.value}
+                              onClick={() => updateKianStatus(s.value)}
+                              className={`text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all ${
+                                currentStatus === s.value ? s.active : s.inactive
+                              }`}
+                            >
+                              <span className={`inline-block w-1.5 h-1.5 rounded-full mr-1 ${currentStatus === s.value ? "bg-white" : s.dot}`} />
+                              {s.value}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>}
+              </section>
+            )}
 
             {hasGuide ? (
               <div className="space-y-4">
