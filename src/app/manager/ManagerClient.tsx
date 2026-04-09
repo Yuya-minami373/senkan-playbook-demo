@@ -319,11 +319,11 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
                         const assignees = [...new Set(catTasks.map(t => t.assignee_name?.split(" ")[0]).filter(Boolean))];
                         return (
                           <div key={cat} className="flex items-center gap-4 px-5 py-3 hover:bg-gray-50/60 transition">
-                            <div className="w-28 shrink-0">
-                              <div className="flex items-center gap-1.5">
-                                <p className="text-sm font-bold text-gray-800">{cat}</p>
+                            <div className="w-40 shrink-0">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <p className="text-sm font-bold text-gray-800 truncate flex-1 min-w-0">{cat}</p>
                                 {hasUrgent && <span className="w-1.5 h-1.5 rounded-full bg-red-500 shrink-0" title="期限アラートあり" />}
-                                {hasOverdue && <span className="text-[10px] bg-amber-100 text-amber-700 font-bold px-1.5 py-0.5 rounded-full shrink-0">遅れ</span>}
+                                {hasOverdue && <span className="text-[10px] bg-amber-100 text-amber-700 font-bold px-1.5 py-0.5 rounded-full shrink-0 whitespace-nowrap">遅れ</span>}
                               </div>
                               <p className="text-[10px] text-gray-400 truncate">{assignees.join("・")}</p>
                             </div>
