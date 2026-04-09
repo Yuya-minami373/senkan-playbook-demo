@@ -11,6 +11,19 @@ interface TotalCount {
   total: number;
 }
 
+interface RecentLog {
+  id: number;
+  category_name: string;
+  sub_category: string | null;
+  duration: string;
+  recorded_by_name: string;
+  recorded_at: string;
+}
+
+interface TodayCount {
+  today_total: number;
+}
+
 export async function GET() {
   initDb();
   const session = await getSession();
@@ -25,6 +38,11 @@ export async function GET() {
   const totalRow = queryOne<TotalCount>("SELECT COUNT(*) as total FROM call_logs");
   const total = totalRow?.total ?? 0;
 
+  const todayRow = queryOne<TodayCount>(
+    "SELECT COUNT(*) as today_total FROM call_logs WHERE date(recorded_at) = date('now', 'localtime')"
+  );
+  const todayTotal = todayRow?.today_total ?? 0;
+
   const byCategory = query<CategoryCount>(`
     SELECT c.name, COUNT(l.id) as count
     FROM call_categories c
@@ -33,5 +51,14 @@ export async function GET() {
     ORDER BY count DESC
   `);
 
-  return NextResponse.json({ total, byCategory });
+  const recent = query<RecentLog>(`
+    SELECT l.id, c.name as category_name, l.sub_category, l.duration, u.name as recorded_by_name, l.recorded_at
+    FROM call_logs l
+    LEFT JOIN call_categories c ON l.category_id = c.id
+    LEFT JOIN users u ON l.recorded_by = u.id
+    ORDER BY l.recorded_at DESC
+    LIMIT 10
+  `);
+
+  return NextResponse.json({ total, todayTotal, byCategory, recent });
 }

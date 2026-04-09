@@ -62,11 +62,13 @@ function formatMMDD(dateStr: string) {
 
 interface CallStats {
   total: number;
+  todayTotal: number;
   byCategory: { name: string; count: number }[];
+  recent: { id: number; category_name: string; sub_category: string | null; duration: string; recorded_by_name: string; recorded_at: string }[];
 }
 
 export default function ManagerClient({ session, tasks, staffUsers, urgentTasks, today, demoMode = false, viewAs }: Props) {
-  const [activeTab, setActiveTab] = useState<"morning" | "gantt" | "roadmap" | "calendar" | "report">("morning");
+  const [activeTab, setActiveTab] = useState<"morning" | "gantt" | "roadmap" | "calls" | "calendar" | "report">("morning");
   const [selectedCalDate, setSelectedCalDate] = useState<string | null>(null);
   const [selectedCalCategory, setSelectedCalCategory] = useState<string>("all");
   const [showCompleted, setShowCompleted] = useState(false);
@@ -194,6 +196,7 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
               { key: "morning",  label: "Today's UniGuide" },
               { key: "gantt",    label: "ガントチャート" },
               { key: "roadmap",  label: "ロードマップ" },
+              { key: "calls",    label: "受電ステータス" },
               ...(isUnipoll ? [
                 { key: "calendar", label: "実績カレンダー" },
                 { key: "report",   label: "UniReport" },
@@ -201,7 +204,7 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
             ].map(tab => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key as "morning" | "gantt" | "roadmap" | "calendar" | "report")}
+                onClick={() => setActiveTab(tab.key as "morning" | "gantt" | "roadmap" | "calls" | "calendar" | "report")}
                 className={`px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all ${
                   activeTab === tab.key
                     ? "bg-blue-600 text-white border-blue-600 shadow-sm"
@@ -501,6 +504,120 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
 
             </div>
           )}
+
+          {/* ━━━ 受電ステータスタブ ━━━ */}
+          {activeTab === "calls" && callStats && (() => {
+            // 日付別に集計
+            const byDate: Record<string, typeof callStats.recent> = {};
+            for (const log of callStats.recent) {
+              const dateKey = log.recorded_at.split(" ")[0];
+              if (!byDate[dateKey]) byDate[dateKey] = [];
+              byDate[dateKey].push(log);
+            }
+            const dateKeys = Object.keys(byDate).sort().reverse();
+
+            const CATEGORY_COLORS: Record<string, string> = {
+              "期日前投票": "bg-emerald-100 text-emerald-700",
+              "入場整理券": "bg-blue-100 text-blue-700",
+              "選挙公報": "bg-amber-100 text-amber-700",
+              "選挙運動・政治活動": "bg-red-100 text-red-700",
+              "不在者・郵便投票": "bg-purple-100 text-purple-700",
+              "その他": "bg-gray-100 text-gray-600",
+            };
+            const getCatColor = (name: string) => {
+              const short = name.replace("関連", "");
+              return CATEGORY_COLORS[short] || "bg-gray-100 text-gray-600";
+            };
+
+            return (
+              <div className="space-y-4">
+                {/* KPIカード */}
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3">
+                    <p className="text-[10px] text-gray-400 mb-1">今日の受電</p>
+                    <p className="text-2xl font-extrabold text-violet-600 tabular-nums">{callStats.todayTotal}<span className="text-sm font-normal text-gray-400 ml-1">件</span></p>
+                  </div>
+                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3">
+                    <p className="text-[10px] text-gray-400 mb-1">累計</p>
+                    <p className="text-2xl font-extrabold text-gray-800 tabular-nums">{callStats.total}<span className="text-sm font-normal text-gray-400 ml-1">件</span></p>
+                  </div>
+                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3">
+                    <p className="text-[10px] text-gray-400 mb-1">最多カテゴリ</p>
+                    <p className="text-sm font-bold text-gray-800 truncate">{callStats.byCategory[0]?.name.replace("関連", "") ?? "—"}</p>
+                    <p className="text-[10px] text-gray-400">{callStats.byCategory[0]?.count ?? 0}件</p>
+                  </div>
+                  <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3">
+                    <p className="text-[10px] text-gray-400 mb-1">カテゴリ数</p>
+                    <p className="text-2xl font-extrabold text-gray-800 tabular-nums">{callStats.byCategory.filter(c => c.count > 0).length}<span className="text-sm font-normal text-gray-400 ml-1">種</span></p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-3">
+                  {/* カテゴリ別内訳 */}
+                  <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-violet-500" />
+                      <h2 className="font-bold text-gray-800 text-sm">カテゴリ別内訳</h2>
+                    </div>
+                    <div className="p-4 space-y-2.5">
+                      {callStats.byCategory.map(c => {
+                        const maxCount = Math.max(...callStats!.byCategory.map(x => x.count), 1);
+                        const short = c.name.replace("関連", "");
+                        return (
+                          <div key={c.name}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs text-gray-700 font-medium">{short}</span>
+                              <span className="text-xs font-bold text-gray-800 tabular-nums">{c.count}件</span>
+                            </div>
+                            <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full bg-violet-400 rounded-full transition-all" style={{ width: `${(c.count / maxCount) * 100}%` }} />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* 受電履歴（日付別） */}
+                  <div className="col-span-2 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div className="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-violet-500" />
+                      <h2 className="font-bold text-gray-800 text-sm">受電履歴</h2>
+                      <span className="ml-auto text-[10px] text-gray-400">直近{callStats.recent.length}件</span>
+                    </div>
+                    <div className="divide-y divide-gray-100 max-h-[480px] overflow-y-auto">
+                      {dateKeys.map(dateKey => {
+                        const logs = byDate[dateKey];
+                        const dt = new Date(dateKey + "T00:00:00");
+                        const isToday = dateKey === today;
+                        const dateLabel = isToday ? "今日" : `${dt.getMonth() + 1}/${dt.getDate()}（${"日月火水木金土"[dt.getDay()]}）`;
+                        return (
+                          <div key={dateKey}>
+                            <div className={`px-4 py-1.5 ${isToday ? "bg-violet-50" : "bg-gray-50"}`}>
+                              <span className={`text-[10px] font-bold ${isToday ? "text-violet-600" : "text-gray-500"}`}>{dateLabel} — {logs.length}件</span>
+                            </div>
+                            {logs.sort((a, b) => b.recorded_at.localeCompare(a.recorded_at)).map(log => {
+                              const t = new Date(log.recorded_at);
+                              const timeStr = `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}`;
+                              return (
+                                <div key={log.id} className="flex items-center gap-2.5 px-4 py-2 hover:bg-gray-50/50 transition">
+                                  <span className="text-[11px] text-gray-400 tabular-nums shrink-0 w-10">{timeStr}</span>
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${getCatColor(log.category_name)}`}>{log.category_name.replace("関連", "")}</span>
+                                  <span className="text-xs text-gray-700 flex-1 truncate">{log.sub_category || "—"}</span>
+                                  <span className="text-[10px] text-gray-400 shrink-0">{log.recorded_by_name}</span>
+                                  <span className="text-[10px] bg-gray-50 text-gray-500 px-1.5 py-0.5 rounded shrink-0">{log.duration}</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
 
           {/* ━━━ ガントチャートタブ ━━━ */}
           {activeTab === "gantt" && (() => {
