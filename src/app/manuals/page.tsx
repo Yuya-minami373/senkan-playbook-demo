@@ -12,11 +12,11 @@ interface ManualRow {
 }
 
 export default async function ManualsPage() {
-  initDb();
+  await initDb();
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const manuals = query<ManualRow>("SELECT * FROM manuals ORDER BY category, title");
+  const manuals = await query<ManualRow>("SELECT * FROM manuals ORDER BY category, title");
 
   return <ManualsClient session={session} manuals={manuals} />;
 }

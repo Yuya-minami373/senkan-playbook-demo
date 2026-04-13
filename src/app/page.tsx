@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth";
 import { initDb } from "@/lib/db";
 
 export default async function Home() {
-  initDb();
+  await initDb();
   const session = await getSession();
 
   if (!session) {

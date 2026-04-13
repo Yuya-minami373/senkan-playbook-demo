@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
+import FlowOverview from "@/components/FlowChart/FlowOverview";
+import FlowCategory from "@/components/FlowChart/FlowCategory";
 import type { User } from "@/lib/auth";
 
 // デモ用選挙日程
@@ -68,7 +70,9 @@ interface CallStats {
 }
 
 export default function ManagerClient({ session, tasks, staffUsers, urgentTasks, today, demoMode = false, viewAs }: Props) {
-  const [activeTab, setActiveTab] = useState<"morning" | "gantt" | "roadmap" | "calls" | "calendar" | "report">("morning");
+  const [activeTab, setActiveTab] = useState<"morning" | "gantt" | "flow" | "calls" | "calendar" | "report">("morning");
+  const [flowView, setFlowView] = useState<"overview" | "category">("overview");
+  const [flowCategory, setFlowCategory] = useState<string | null>(null);
   const [selectedCalDate, setSelectedCalDate] = useState<string | null>(null);
   const [selectedCalCategory, setSelectedCalCategory] = useState<string>("all");
   const [showCompleted, setShowCompleted] = useState(false);
@@ -156,14 +160,14 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
       daysToVote={daysToVote}
       demoMode={demoMode}
     >
-      <div className="flex-1 overflow-y-auto" style={{ backgroundColor: "#f8fafc" }}>
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden" style={{ backgroundColor: "#f8fafc" }}>
 
         {/* ━━━ Page Header ━━━ */}
-        <div className="bg-white border-b border-gray-200 px-6 py-2">
+        <div className="bg-white border-b border-gray-200 px-6 py-2 shrink-0">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-[10px] text-gray-400 font-medium tracking-wide">係長ダッシュボード</p>
-              <h1 className="text-base font-bold text-gray-900 leading-tight">全職員進捗ボード</h1>
+              <h1 className="text-base font-bold text-gray-900 leading-tight">選挙業務ダッシュボード</h1>
             </div>
 
             {/* Countdown pills */}
@@ -194,8 +198,8 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
           <div className="flex gap-2 mt-2">
             {[
               { key: "morning",  label: "Today's UniGuide" },
+              { key: "flow",     label: "業務フロー" },
               { key: "gantt",    label: "ガントチャート" },
-              { key: "roadmap",  label: "ロードマップ" },
               { key: "calls",    label: "受電ステータス" },
               ...(isUnipoll ? [
                 { key: "calendar", label: "実績カレンダー" },
@@ -204,7 +208,7 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
             ].map(tab => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key as "morning" | "gantt" | "roadmap" | "calls" | "calendar" | "report")}
+                onClick={() => setActiveTab(tab.key as "morning" | "gantt" | "flow" | "calls" | "calendar" | "report")}
                 className={`px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all ${
                   activeTab === tab.key
                     ? "bg-blue-600 text-white border-blue-600 shadow-sm"
@@ -217,11 +221,10 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
           </div>
         </div>
 
-        <div className={activeTab === "gantt" ? "" : "px-6 py-3"}>
 
           {/* ━━━ 朝の確認タブ ━━━ */}
           {activeTab === "morning" && (
-            <div className="space-y-4">
+            <div className="px-6 py-3 space-y-4 flex-1 overflow-y-auto">
 
               {/* ━━━ 進捗サマリーバー ━━━ */}
               {(() => {
@@ -514,7 +517,7 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
               if (!byDate[dateKey]) byDate[dateKey] = [];
               byDate[dateKey].push(log);
             }
-            const dateKeys = Object.keys(byDate).sort().reverse();
+            const dateKeys = Object.keys(byDate).sort();
 
             const CATEGORY_COLORS: Record<string, string> = {
               "期日前投票": "bg-emerald-100 text-emerald-700",
@@ -530,7 +533,7 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
             };
 
             return (
-              <div className="space-y-4">
+              <div className="px-6 py-3 space-y-4 flex-1 overflow-y-auto">
                 {/* KPIカード */}
                 <div className="grid grid-cols-4 gap-3">
                   <div className="bg-white rounded-xl border border-gray-200 shadow-sm px-4 py-3">
@@ -596,7 +599,7 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
                             <div className={`px-4 py-1.5 ${isToday ? "bg-violet-50" : "bg-gray-50"}`}>
                               <span className={`text-[10px] font-bold ${isToday ? "text-violet-600" : "text-gray-500"}`}>{dateLabel} — {logs.length}件</span>
                             </div>
-                            {logs.sort((a, b) => b.recorded_at.localeCompare(a.recorded_at)).map(log => {
+                            {logs.sort((a, b) => a.recorded_at.localeCompare(b.recorded_at)).map(log => {
                               const t = new Date(log.recorded_at);
                               const timeStr = `${String(t.getHours()).padStart(2, "0")}:${String(t.getMinutes()).padStart(2, "0")}`;
                               return (
@@ -623,8 +626,12 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
           {activeTab === "gantt" && (() => {
             const GCELL = 26;
             const GLEFT = 280;
-            const GANTT_START = "2026-02-01";
-            const GANTT_END   = "2026-05-17";
+            const GANTT_START_D = new Date(today + "T00:00:00");
+            GANTT_START_D.setDate(GANTT_START_D.getDate() - 21);
+            const GANTT_START = GANTT_START_D.toISOString().split("T")[0];
+            const GANTT_END_D = new Date(VOTE_DATE + "T00:00:00");
+            GANTT_END_D.setDate(GANTT_END_D.getDate() + 7);
+            const GANTT_END = GANTT_END_D.toISOString().split("T")[0];
 
             const ganttDays: string[] = [];
             for (
@@ -683,9 +690,9 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
               : "bg-gray-300";
 
             return (
-              <div className="bg-white border-t border-gray-200 overflow-hidden">
+              <div className="flex-1 overflow-hidden flex flex-col bg-white border-t border-gray-200">
                 {/* ━━━ 凡例 + 完了トグル ━━━ */}
-                <div className="flex items-center gap-4 px-4 py-2 border-b border-gray-100 bg-slate-50/60 flex-wrap">
+                <div className="flex items-center gap-4 px-4 py-2 border-b border-gray-100 bg-slate-50/60 flex-wrap shrink-0">
                   <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide shrink-0">凡例</span>
                   <div className="flex items-center gap-1.5">
                     <span className="w-8 h-3.5 rounded-full shrink-0 bg-blue-50 border border-blue-400" />
@@ -721,13 +728,13 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
                     </button>
                   </div>
                 </div>
-                <div ref={ganttScrollRef} className="overflow-x-auto overflow-y-auto" style={{ maxHeight: "calc(100vh - 160px)" }}>
+                <div ref={ganttScrollRef} className="flex-1 overflow-x-auto overflow-y-auto">
                   <div style={{ minWidth: `${GLEFT + GDAYS * GCELL}px` }}>
 
                     {/* ━ 月ヘッダー ━ */}
                     <div className="flex border-b border-gray-100 bg-white sticky top-0 z-40">
                       <div className="shrink-0 border-r-2 border-gray-200 px-3 flex items-end pb-1 bg-white sticky left-0 z-50" style={{ width: GLEFT }}>
-                        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">タスク / 担当</span>
+                        <span className="text-[10px] font-semibold text-gray-400 tracking-wide">タスク / 担当</span>
                       </div>
                       <div className="flex">
                         {gMonthGroups.map(mg => (
@@ -739,7 +746,7 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
                     </div>
 
                     {/* ━ 日付ヘッダー ━ */}
-                    <div className="flex border-b-2 border-gray-200 bg-white sticky top-[27px] z-40">
+                    <div className="flex border-b-2 border-gray-200 bg-white sticky top-[24px] z-40">
                       <div className="shrink-0 border-r-2 border-gray-200 bg-white sticky left-0 z-50" style={{ width: GLEFT }} />
                       <div className="flex">
                         {ganttDays.map(day => {
@@ -889,165 +896,23 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
             );
           })()}
 
-          {/* ━━━ ロードマップタブ ━━━ */}
-          {activeTab === "roadmap" && (() => {
-            const timelineStart = new Date(ANNOUNCEMENT_DATE + "T00:00:00");
-            timelineStart.setDate(timelineStart.getDate() - 7);
-            const timelineEnd = new Date(VOTE_DATE + "T00:00:00");
-            const totalDays = Math.round((timelineEnd.getTime() - timelineStart.getTime()) / 86400000);
-
-            const todayPct = Math.round(
-              ((new Date(today + "T00:00:00").getTime() - timelineStart.getTime()) / 86400000) / totalDays * 100
-            );
-            const announcePct = Math.round(
-              ((new Date(ANNOUNCEMENT_DATE + "T00:00:00").getTime() - timelineStart.getTime()) / 86400000) / totalDays * 100
-            );
-
-            const phases = [
-              {
-                label: "告示前",
-                icon: "📋",
-                color: "blue",
-                filter: (t: Task) => t.due_date < ANNOUNCEMENT_DATE,
-                from: "0%", to: `${announcePct}%`,
-              },
-              {
-                label: "告示日",
-                icon: "📢",
-                color: "amber",
-                filter: (t: Task) => t.due_date === ANNOUNCEMENT_DATE,
-                from: `${announcePct}%`, to: `${announcePct}%`,
-              },
-              {
-                label: "選挙期間",
-                icon: "📣",
-                color: "purple",
-                filter: (t: Task) => t.due_date > ANNOUNCEMENT_DATE && t.due_date < VOTE_DATE,
-                from: `${announcePct}%`, to: "100%",
-              },
-              {
-                label: "投票日前日・当日",
-                icon: "🗳️",
-                color: "emerald",
-                filter: (t: Task) => t.due_date >= VOTE_DATE,
-                from: "100%", to: "100%",
-              },
-            ];
-
-            const colorMap: Record<string, { header: string; bar: string; badge: string; text: string; border: string }> = {
-              blue:    { header: "from-blue-600 to-blue-700",     bar: "bg-blue-500",    badge: "bg-blue-100 text-blue-700",    text: "text-blue-600",    border: "border-blue-200" },
-              amber:   { header: "from-amber-600 to-amber-700",   bar: "bg-amber-500",   badge: "bg-amber-100 text-amber-700",   text: "text-amber-600",   border: "border-amber-200" },
-              purple:  { header: "from-purple-600 to-purple-700", bar: "bg-purple-500",  badge: "bg-purple-100 text-purple-700", text: "text-purple-600",  border: "border-purple-200" },
-              emerald: { header: "from-emerald-600 to-emerald-700", bar: "bg-emerald-500", badge: "bg-emerald-100 text-emerald-700", text: "text-emerald-600", border: "border-emerald-200" },
-            };
-
-            const categories = Array.from(new Set(tasks.map(t => t.category)));
-
-            return (
-              <div className="space-y-4">
-                {/* KPIヘッダー */}
-                <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl px-6 py-5 text-white">
-                  <div className="flex items-center gap-8 mb-4">
-                    <div>
-                      <p className="text-[11px] text-slate-400">告示まで</p>
-                      <p className="text-3xl font-black tabular-nums text-orange-400">{daysToAnnouncement}<span className="text-base font-semibold text-orange-300 ml-1">日</span></p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] text-slate-400">投票日まで</p>
-                      <p className="text-3xl font-black tabular-nums text-slate-200">{daysToVote}<span className="text-base font-semibold text-slate-400 ml-1">日</span></p>
-                    </div>
-                    <div className="ml-auto text-right">
-                      <p className="text-[11px] text-slate-400">全体完了率</p>
-                      <p className="text-3xl font-black tabular-nums text-emerald-400">{progressCompleted}<span className="text-base font-semibold text-emerald-300 ml-0.5">%</span></p>
-                    </div>
-                  </div>
-                  {/* プロジェクト別進捗 */}
-                  <div className="space-y-2">
-                    {Array.from(new Set(tasks.map((t: Task) => t.category))).map((cat: string) => {
-                      const catTasks = tasks.filter((t: Task) => t.category === cat);
-                      const done = catTasks.filter((t: Task) => t.status === "完了").length;
-                      const pct = catTasks.length > 0 ? Math.round(done / catTasks.length * 100) : 0;
-                      const hasOverdue = catTasks.some((t: Task) => t.status !== "完了" && t.due_date < today);
-                      return (
-                        <div key={cat} className="flex items-center gap-3">
-                          <span className="text-[11px] text-slate-300 w-28 shrink-0 truncate">{cat}</span>
-                          <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
-                            <div
-                              className={`h-full rounded-full transition-all ${pct === 100 ? "bg-emerald-400" : hasOverdue ? "bg-red-400" : "bg-blue-400"}`}
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
-                          <span className="text-[11px] text-slate-400 w-10 text-right tabular-nums shrink-0">{done}/{catTasks.length}</span>
-                          <span className={`text-[11px] w-8 text-right tabular-nums font-bold shrink-0 ${pct === 100 ? "text-emerald-400" : hasOverdue ? "text-red-400" : "text-slate-300"}`}>{pct}%</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* 3フェーズカラム */}
-                <div className="grid grid-cols-4 gap-4">
-                  {phases.map(phase => {
-                    const c = colorMap[phase.color];
-                    const phaseTasks = tasks.filter(phase.filter);
-                    const phaseDone = phaseTasks.filter(t => t.status === "完了").length;
-                    const phasePct = phaseTasks.length > 0 ? Math.round((phaseDone / phaseTasks.length) * 100) : 0;
-                    const phaseCategories = categories.filter(cat => phaseTasks.some(t => t.category === cat));
-
-                    return (
-                      <div key={phase.label} className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-                        {/* フェーズヘッダー */}
-                        <div className={`bg-gradient-to-r ${c.header} px-4 py-3`}>
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <span className="text-lg">{phase.icon}</span>
-                              <h3 className="text-white font-bold text-sm">{phase.label}</h3>
-                            </div>
-                            {phasePct === 100 && (
-                              <span className="text-[10px] bg-white/20 text-white font-bold px-2 py-0.5 rounded-full">✅ クリア！</span>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden">
-                              <div className="h-full bg-white rounded-full transition-all" style={{ width: `${phasePct}%` }} />
-                            </div>
-                            <span className="text-white/90 text-xs font-bold tabular-nums">{phasePct}%</span>
-                          </div>
-                          <p className="text-white/60 text-[10px] mt-1">{phaseDone} / {phaseTasks.length} タスク完了</p>
-                        </div>
-
-                        {/* カテゴリ別進捗 */}
-                        <div className="p-3 space-y-2">
-                          {phaseCategories.length === 0 ? (
-                            <p className="text-xs text-gray-400 text-center py-4">このフェーズにタスクなし</p>
-                          ) : phaseCategories.map(cat => {
-                            const catTasks = phaseTasks.filter(t => t.category === cat);
-                            const catDone = catTasks.filter(t => t.status === "完了").length;
-                            const catPct = catTasks.length > 0 ? Math.round((catDone / catTasks.length) * 100) : 0;
-                            return (
-                              <div key={cat} className={`rounded-xl border ${c.border} px-3 py-2`}>
-                                <div className="flex items-center justify-between mb-1">
-                                  <span className="text-xs font-bold text-gray-700 truncate flex-1">{cat}</span>
-                                  {catPct === 100 ? (
-                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${c.badge} ml-2 shrink-0`}>完了</span>
-                                  ) : (
-                                    <span className="text-[10px] text-gray-400 ml-2 shrink-0 tabular-nums">{catDone}/{catTasks.length}</span>
-                                  )}
-                                </div>
-                                <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-                                  <div className={`h-full ${c.bar} rounded-full transition-all`} style={{ width: `${catPct}%` }} />
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })()}
+          {/* ━━━ 業務フロータブ ━━━ */}
+          {activeTab === "flow" && (
+            <div className="px-6 py-4 flex-1 overflow-y-auto">
+              {flowView === "overview" ? (
+                <FlowOverview
+                  tasks={tasks}
+                  onCategoryClick={(cat) => { setFlowView("category"); setFlowCategory(cat); }}
+                />
+              ) : flowCategory ? (
+                <FlowCategory
+                  tasks={tasks.filter(t => t.category === flowCategory)}
+                  category={flowCategory}
+                  onBack={() => { setFlowView("overview"); setFlowCategory(null); }}
+                />
+              ) : null}
+            </div>
+          )}
 
           {/* ━━━ 実績カレンダータブ ━━━ */}
           {activeTab === "calendar" && (() => {
@@ -1092,7 +957,7 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
             ];
 
             return (
-              <div className="space-y-4">
+              <div className="px-6 py-3 space-y-4 flex-1 overflow-y-auto">
                 {/* Header card */}
                 <div className="bg-white border border-slate-200 rounded-xl px-6 py-5">
                   <div className="flex items-start justify-between mb-4">
@@ -1360,7 +1225,7 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
             const BENCHMARK_RATE = 82;
 
             return (
-              <div className="space-y-4">
+              <div className="px-6 py-3 space-y-4 flex-1 overflow-y-auto">
 
                 {/* ① Executive header */}
                 <div className="rounded-xl px-6 py-5 text-white" style={{ background: "linear-gradient(135deg, #1a3a8f 0%, #1e4db7 60%, #1a3a8f 100%)" }}>
@@ -1482,7 +1347,6 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
             );
           })()}
 
-        </div>
       </div>
     </AppShell>
   );

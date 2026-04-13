@@ -4,7 +4,7 @@ import { queryOne } from "./db";
 export interface User {
   id: number;
   name: string;
-  role: "staff" | "manager" | "unipoll";
+  role: "staff" | "manager" | "unipoll" | "crew_lead";
   category: string | null;
 }
 
@@ -29,7 +29,7 @@ export async function validateLogin(
   name: string,
   password: string
 ): Promise<User | null> {
-  const user = queryOne<{ id: number; name: string; role: string; category: string | null }>(
+  const user = await queryOne<{ id: number; name: string; role: string; category: string | null }>(
     "SELECT id, name, role, category FROM users WHERE name = ? AND password = ?",
     [name, password]
   );
@@ -38,7 +38,7 @@ export async function validateLogin(
   return {
     id: user.id,
     name: user.name,
-    role: user.role as "staff" | "manager" | "unipoll",
+    role: user.role as "staff" | "manager" | "unipoll" | "crew_lead",
     category: user.category,
   };
 }

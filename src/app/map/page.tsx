@@ -17,11 +17,11 @@ interface PollingStation {
 }
 
 export default async function MapPage() {
-  initDb();
+  await initDb();
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const stations = query<PollingStation>(
+  const stations = await query<PollingStation>(
     "SELECT * FROM map_points ORDER BY type, no",
     []
   );

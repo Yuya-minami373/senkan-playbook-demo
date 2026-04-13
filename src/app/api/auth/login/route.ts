@@ -4,7 +4,7 @@ import { validateLogin, createSessionToken } from "@/lib/auth";
 import { initDb } from "@/lib/db";
 
 export async function POST(request: Request) {
-  initDb();
+  await initDb();
   const { name, password } = await request.json();
 
   const user = await validateLogin(name, password);

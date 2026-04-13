@@ -16,11 +16,11 @@ interface KianRow {
 }
 
 export default async function KianPage() {
-  initDb();
+  await initDb();
   const session = await getSession();
   if (!session) redirect("/login");
 
-  const kians = query<KianRow>(`
+  const kians = await query<KianRow>(`
     SELECT k.*, t.title as task_title
     FROM kians k
     LEFT JOIN tasks t ON k.task_id = t.id

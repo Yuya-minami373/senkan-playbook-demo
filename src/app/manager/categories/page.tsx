@@ -15,12 +15,12 @@ interface TaskRow {
 }
 
 export default async function CategoriesPage() {
-  initDb();
+  await initDb();
   const session = await getSession();
   if (!session) redirect("/login");
   if (session.role !== "manager") redirect("/dashboard");
 
-  const tasks = query<TaskRow>(`
+  const tasks = await query<TaskRow>(`
     SELECT t.id, t.title, t.category, t.status, t.due_date, t.assignee_id, u.name as assignee_name
     FROM tasks t
     LEFT JOIN users u ON t.assignee_id = u.id

@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { User } from "@/lib/auth";
 
-type IconName = "grid" | "chart-bar" | "phone" | "book-open" | "map-pin" | "clipboard-doc";
+type IconName = "grid" | "chart-bar" | "phone" | "book-open" | "map-pin" | "clipboard-doc" | "users" | "flow";
 
 const NAV_ICON_PATHS: Record<IconName, string> = {
   "grid": "M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z",
@@ -15,6 +15,8 @@ const NAV_ICON_PATHS: Record<IconName, string> = {
   "phone": "M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z",
   "book-open": "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253",
   "map-pin": "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z",
+  "users": "M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z",
+  "flow": "M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z",
 };
 
 function NavIcon({ name, className }: { name: IconName; className?: string }) {
@@ -26,10 +28,11 @@ function NavIcon({ name, className }: { name: IconName; className?: string }) {
 }
 
 const DEMO_VIEWS = [
-  { key: "staff-1", label: "職員A", sub: "入場整理券", href: "/dashboard?viewAs=1" },
-  { key: "staff-2", label: "職員B", sub: "投票所管理", href: "/dashboard?viewAs=2" },
-  { key: "manager", label: "係長",  sub: "管理者",    href: "/manager?viewAs=manager" },
-  { key: "unipoll", label: "UniPoll",   sub: "全機能",    href: "/manager" },
+  { key: "staff-1",    label: "職員A",       sub: "入場整理券",   href: "/dashboard?viewAs=1" },
+  { key: "staff-2",    label: "職員B",       sub: "投票所管理",   href: "/dashboard?viewAs=2" },
+  { key: "manager",    label: "係長",        sub: "管理者",       href: "/manager?viewAs=manager" },
+  { key: "crew_lead",  label: "クルー責任者", sub: "時間帯報告",   href: "/crew/report?viewAs=crew_lead" },
+  { key: "unipoll",    label: "UniPoll",     sub: "全機能",       href: "/manager" },
 ];
 
 function DemoNavBar() {
@@ -42,6 +45,7 @@ function DemoNavBar() {
     if (key === "staff-1") return pathname === "/dashboard" && viewAs === "1";
     if (key === "staff-2") return pathname === "/dashboard" && viewAs === "2";
     if (key === "manager") return pathname.startsWith("/manager") && viewAs === "manager";
+    if (key === "crew_lead") return pathname.startsWith("/crew") && viewAs === "crew_lead";
     if (key === "unipoll") return pathname.startsWith("/manager") && !viewAs;
     return false;
   }
@@ -101,19 +105,25 @@ interface AppShellProps {
 
 const NAV_ITEMS_STAFF: { id: string; icon: IconName; label: string; href: string }[] = [
   { id: "my-projects", icon: "grid",           label: "Myプロジェクト", href: "/dashboard" },
-  { id: "kian",        icon: "clipboard-doc",  label: "起案一覧",       href: "/kian" },
   { id: "calls",       icon: "phone",          label: "受電記録",       href: "/calls" },
+  { id: "kian",        icon: "clipboard-doc",  label: "起案一覧",       href: "/kian" },
   { id: "manuals",     icon: "book-open",      label: "マニュアル",     href: "/manuals" },
-  { id: "map",         icon: "map-pin",        label: "投票所マップ",   href: "/map" },
+  { id: "map",         icon: "map-pin",        label: "投票所・ポス掲マップ", href: "/map" },
+  { id: "crew",        icon: "users",          label: "UniPollクルー",  href: "/crew" },
 ];
 
 const NAV_ITEMS_MANAGER: { id: string; icon: IconName; label: string; href: string }[] = [
   { id: "manager",    icon: "grid",            label: "ダッシュボード", href: "/manager" },
   { id: "categories", icon: "chart-bar",       label: "業務別進捗",     href: "/manager/categories" },
-  { id: "kian",       icon: "clipboard-doc",   label: "起案一覧",       href: "/kian" },
   { id: "calls",      icon: "phone",           label: "受電記録",       href: "/calls" },
+  { id: "kian",       icon: "clipboard-doc",   label: "起案一覧",       href: "/kian" },
   { id: "manuals",    icon: "book-open",       label: "マニュアル",     href: "/manuals" },
-  { id: "map",        icon: "map-pin",         label: "投票所マップ",   href: "/map" },
+  { id: "map",        icon: "map-pin",         label: "投票所・ポス掲マップ", href: "/map" },
+  { id: "crew",       icon: "users",           label: "UniPollクルー",  href: "/crew" },
+];
+
+const NAV_ITEMS_CREW_LEAD: { id: string; icon: IconName; label: string; href: string }[] = [
+  { id: "crew-report", icon: "chart-bar", label: "時間帯報告", href: "/crew/report" },
 ];
 
 export default function AppShell({
@@ -131,7 +141,7 @@ export default function AppShell({
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
-  const navItems = user.role === "manager" ? NAV_ITEMS_MANAGER : NAV_ITEMS_STAFF;
+  const navItems = user.role === "crew_lead" ? NAV_ITEMS_CREW_LEAD : user.role === "manager" ? NAV_ITEMS_MANAGER : NAV_ITEMS_STAFF;
 
   function isActive(_href: string, id: string) {
     if (id === "categories" && pathname === "/manager/categories") return true;
@@ -145,6 +155,8 @@ export default function AppShell({
     if (id === "calls" && pathname === "/calls") return true;
     if (id === "manuals" && pathname === "/manuals") return true;
     if (id === "map" && pathname === "/map") return true;
+    if (id === "crew" && pathname.startsWith("/crew")) return true;
+    if (id === "crew-report" && pathname === "/crew/report") return true;
     return false;
   }
 

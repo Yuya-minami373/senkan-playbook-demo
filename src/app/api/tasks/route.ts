@@ -19,7 +19,7 @@ interface TaskRow {
 }
 
 export async function GET() {
-  initDb();
+  await initDb();
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -27,7 +27,7 @@ export async function GET() {
 
   let tasks;
   if (session.role === "manager") {
-    tasks = query<TaskRow>(`
+    tasks = await query<TaskRow>(`
       SELECT t.*, u.name as assignee_name, u2.name as sub_assignee_name
       FROM tasks t
       LEFT JOIN users u ON t.assignee_id = u.id
@@ -35,7 +35,7 @@ export async function GET() {
       ORDER BY t.due_date ASC
     `);
   } else {
-    tasks = query<TaskRow>(`
+    tasks = await query<TaskRow>(`
       SELECT t.*, u.name as assignee_name, u2.name as sub_assignee_name
       FROM tasks t
       LEFT JOIN users u ON t.assignee_id = u.id

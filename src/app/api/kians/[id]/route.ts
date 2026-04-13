@@ -6,7 +6,7 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  initDb();
+  await initDb();
   const { id } = await params;
   const body = await request.json();
   const { status } = body;
@@ -15,9 +15,9 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
-  execute("UPDATE kians SET status = ? WHERE id = ?", [status, id]);
+  await execute("UPDATE kians SET status = ? WHERE id = ?", [status, id]);
 
-  const updated = queryOne<{ id: number; status: string }>(
+  const updated = await queryOne<{ id: number; status: string }>(
     "SELECT id, status FROM kians WHERE id = ?",
     [id]
   );

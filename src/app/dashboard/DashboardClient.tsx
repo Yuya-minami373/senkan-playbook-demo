@@ -3,6 +3,8 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import AppShell from "@/components/AppShell";
+import FlowOverview from "@/components/FlowChart/FlowOverview";
+import FlowCategory from "@/components/FlowChart/FlowCategory";
 import type { User } from "@/lib/auth";
 
 const ANNOUNCEMENT_DATE = "2026-05-04";
@@ -86,7 +88,9 @@ function getCategoryStats(tasks: Task[]) {
 export default function DashboardClient({
   user, tasks, allTasks = [], todayTasks, tomorrowTasks, today, demoMode = false,
 }: DashboardClientProps) {
-  const [activeTab, setActiveTab] = useState<"morning" | "list" | "gantt" | "roadmap">("morning");
+  const [activeTab, setActiveTab] = useState<"morning" | "list" | "gantt" | "flow">("morning");
+  const [flowView, setFlowView] = useState<"overview" | "category">("overview");
+  const [flowCategory, setFlowCategory] = useState<string | null>(null);
   const [showCompleted, setShowCompleted] = useState(false);
   const ganttScrollRef = useRef<HTMLDivElement>(null);
 
@@ -192,13 +196,13 @@ export default function DashboardClient({
           <div className="flex gap-2 mt-1">
             {[
               { key: "morning",  label: "Today's UniGuide" },
+              { key: "flow",     label: "業務フロー" },
               { key: "list",     label: "タスク一覧" },
               { key: "gantt",    label: "ガントチャート" },
-              { key: "roadmap",  label: "ロードマップ" },
             ].map(tab => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key as "morning" | "list" | "gantt" | "roadmap")}
+                onClick={() => setActiveTab(tab.key as "morning" | "list" | "gantt" | "flow")}
                 className={`px-3 py-1.5 rounded-lg text-sm font-semibold border transition-all ${
                   activeTab === tab.key
                     ? "bg-blue-600 text-white border-blue-600 shadow-sm"
@@ -982,8 +986,26 @@ export default function DashboardClient({
           );
         })()}
 
-        {/* ━━━ ロードマップタブ ━━━ */}
-        {activeTab === "roadmap" && (() => {
+        {/* ━━━ 業務フロータブ ━━━ */}
+        {activeTab === "flow" && (
+          <div className="px-6 py-4 flex-1 overflow-y-auto">
+            {flowView === "overview" ? (
+              <FlowOverview
+                tasks={allTasks}
+                onCategoryClick={(cat) => { setFlowView("category"); setFlowCategory(cat); }}
+              />
+            ) : flowCategory ? (
+              <FlowCategory
+                tasks={allTasks.filter(t => t.category === flowCategory)}
+                category={flowCategory}
+                onBack={() => { setFlowView("overview"); setFlowCategory(null); }}
+              />
+            ) : null}
+          </div>
+        )}
+
+        {/* (removed: old roadmap tab) */}
+        {false && (() => {
           const announceDate = new Date(ANNOUNCEMENT_DATE + "T00:00:00");
           const voteDate     = new Date(VOTE_DATE + "T00:00:00");
           const todayDate    = new Date(today + "T00:00:00");

@@ -16,8 +16,8 @@ export default async function CallDetailPage({ params }: { params: Promise<{ id:
   const user = await getSession();
   if (!user) redirect("/login");
 
-  initDb();
-  const category = queryOne<CallCategory>(
+  await initDb();
+  const category = await queryOne<CallCategory>(
     "SELECT id, name, manual, sort_order FROM call_categories WHERE id = ?",
     [parseInt(id)]
   );

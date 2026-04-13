@@ -31,14 +31,14 @@ export default async function ManagerPage({
 }: {
   searchParams: Promise<{ viewAs?: string }>;
 }) {
-  initDb();
+  await initDb();
   const session = await getSession();
   if (!session) redirect("/login");
   if (session.role !== "manager" && session.role !== "unipoll") redirect("/dashboard");
 
   const { viewAs } = await searchParams;
 
-  const tasks = query<TaskRow>(`
+  const tasks = await query<TaskRow>(`
     SELECT t.id, t.title, t.category, t.status, t.start_date, t.due_date, t.assignee_id, u.name as assignee_name, t.completed_at, t.effort_label, t.sub_assignee_id, u2.name as sub_assignee_name
     FROM tasks t
     LEFT JOIN users u ON t.assignee_id = u.id
@@ -46,7 +46,7 @@ export default async function ManagerPage({
     ORDER BY t.due_date ASC
   `);
 
-  const staffUsers = query<UserRow>(
+  const staffUsers = await query<UserRow>(
     "SELECT id, name, role, category FROM users WHERE role = 'staff' ORDER BY id"
   );
 

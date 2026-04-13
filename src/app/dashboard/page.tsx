@@ -29,7 +29,7 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ viewAs?: string }>;
 }) {
-  initDb();
+  await initDb();
   const session = await getSession();
   if (!session) redirect("/login");
   if (session.role === "manager") redirect("/manager");
@@ -42,12 +42,12 @@ export default async function DashboardPage({
     : session.id;
 
   const displayUser = session.role === "unipoll" && viewAs
-    ? (queryOne<{ id: number; name: string; role: string; category: string | null }>(
+    ? ((await queryOne<{ id: number; name: string; role: string; category: string | null }>(
         "SELECT id, name, role, category FROM users WHERE id = ?", [targetUserId]
-      ) ?? session)
+      )) ?? session)
     : session;
 
-  const tasks = query<TaskRow>(`
+  const tasks = await query<TaskRow>(`
     SELECT t.*, u.name as assignee_name, u2.name as sub_assignee_name
     FROM tasks t
     LEFT JOIN users u ON t.assignee_id = u.id
@@ -56,7 +56,7 @@ export default async function DashboardPage({
     ORDER BY t.due_date ASC
   `, [targetUserId, targetUserId]);
 
-  const allTasks = query<TaskRow>(`
+  const allTasks = await query<TaskRow>(`
     SELECT t.*, u.name as assignee_name, u2.name as sub_assignee_name
     FROM tasks t
     LEFT JOIN users u ON t.assignee_id = u.id

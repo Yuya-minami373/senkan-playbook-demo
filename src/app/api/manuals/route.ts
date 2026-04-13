@@ -11,12 +11,12 @@ interface ManualRow {
 }
 
 export async function GET() {
-  initDb();
+  await initDb();
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const manuals = query<ManualRow>("SELECT * FROM manuals ORDER BY category, title");
+  const manuals = await query<ManualRow>("SELECT * FROM manuals ORDER BY category, title");
   return NextResponse.json(manuals);
 }

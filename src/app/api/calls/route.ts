@@ -10,13 +10,13 @@ interface CallCategory {
 }
 
 export async function GET() {
-  initDb();
+  await initDb();
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const categories = query<CallCategory>(
+  const categories = await query<CallCategory>(
     "SELECT id, name, manual, sort_order FROM call_categories ORDER BY sort_order ASC"
   );
 
@@ -24,7 +24,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  initDb();
+  await initDb();
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "category_id and duration are required" }, { status: 400 });
   }
 
-  execute(
+  await execute(
     "INSERT INTO call_logs (category_id, sub_category, duration, recorded_by) VALUES (?, ?, ?, ?)",
     [category_id, sub_category ?? null, duration, session.id]
   );

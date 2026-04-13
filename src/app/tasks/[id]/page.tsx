@@ -42,12 +42,12 @@ export default async function TaskDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  initDb();
+  await initDb();
   const session = await getSession();
   if (!session) redirect("/login");
 
   const { id } = await params;
-  const task = queryOne<TaskRow>(`
+  const task = await queryOne<TaskRow>(`
     SELECT t.*, u.name as assignee_name, u2.name as sub_assignee_name
     FROM tasks t
     LEFT JOIN users u ON t.assignee_id = u.id
@@ -57,12 +57,12 @@ export default async function TaskDetailPage({
 
   if (!task) notFound();
 
-  const manual = queryOne<ManualRow>(
+  const manual = await queryOne<ManualRow>(
     `SELECT * FROM manuals WHERE category = ? LIMIT 1`,
     [task.category]
   ) ?? null;
 
-  const nextTask = queryOne<NextTaskRow>(`
+  const nextTask = await queryOne<NextTaskRow>(`
     SELECT t.id, t.title, t.category, t.due_date
     FROM tasks t
     WHERE t.category = ?
@@ -73,7 +73,7 @@ export default async function TaskDetailPage({
     LIMIT 1
   `, [task.category, task.id, task.assignee_id]) ?? null;
 
-  const kians = query<{ id: number; title: string; due_timing: string | null; status: string; note: string | null }>(
+  const kians = await query<{ id: number; title: string; due_timing: string | null; status: string; note: string | null }>(
     `SELECT id, title, due_timing, status, note FROM kians WHERE task_id = ?`,
     [task.id]
   );

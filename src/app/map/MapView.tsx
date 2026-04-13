@@ -22,7 +22,7 @@ interface Props {
   onSelectStation: (s: Station) => void;
 }
 
-function createMarkerIcon(type: "polling" | "poster", no: number, isSelected: boolean) {
+function createMarkerIcon(type: "polling" | "poster" | "early", no: number, isSelected: boolean) {
   const color = type === "polling" ? "#2563eb" : type === "early" ? "#10b981" : "#f97316";
   const size = isSelected ? 32 : 26;
   const fontSize = isSelected ? 12 : 10;
