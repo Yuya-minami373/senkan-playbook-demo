@@ -5,6 +5,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import type { User } from "@/lib/auth";
+import { ANNOUNCEMENT_DATE, VOTE_DATE } from "@/components/FlowChart/flowConstants";
 
 type IconName = "grid" | "chart-bar" | "phone" | "book-open" | "map-pin" | "clipboard-doc" | "users" | "flow";
 
@@ -96,8 +97,6 @@ interface AppShellProps {
   children: React.ReactNode;
   demoMode?: boolean;
   electionName?: string;
-  daysToAnnouncement?: number;
-  daysToVote?: number;
   progressCompleted?: number;
   progressInProgress?: number;
   progressLabel?: string;
@@ -131,8 +130,6 @@ export default function AppShell({
   children,
   demoMode = false,
   electionName = "令和8年 市議会議員選挙",
-  daysToAnnouncement = 35,
-  daysToVote = 42,
   progressCompleted = 24,
   progressInProgress = 18,
   progressLabel,
@@ -140,6 +137,11 @@ export default function AppShell({
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+
+  const todayStr = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Tokyo" });
+  const todayMs = new Date(todayStr + "T00:00:00").getTime();
+  const daysToAnnouncement = Math.round((new Date(ANNOUNCEMENT_DATE + "T00:00:00").getTime() - todayMs) / 86400000);
+  const daysToVote = Math.round((new Date(VOTE_DATE + "T00:00:00").getTime() - todayMs) / 86400000);
 
   const navItems = user.role === "crew_lead" ? NAV_ITEMS_CREW_LEAD : user.role === "manager" ? NAV_ITEMS_MANAGER : NAV_ITEMS_STAFF;
 
