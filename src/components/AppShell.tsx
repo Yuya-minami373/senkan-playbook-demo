@@ -5,7 +5,6 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import type { User } from "@/lib/auth";
-import { ANNOUNCEMENT_DATE, VOTE_DATE } from "@/components/FlowChart/flowConstants";
 
 type IconName = "grid" | "chart-bar" | "phone" | "book-open" | "map-pin" | "clipboard-doc" | "users" | "flow";
 
@@ -138,11 +137,6 @@ export default function AppShell({
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
-  const todayStr = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Tokyo" });
-  const todayMs = new Date(todayStr + "T00:00:00").getTime();
-  const daysToAnnouncement = Math.round((new Date(ANNOUNCEMENT_DATE + "T00:00:00").getTime() - todayMs) / 86400000);
-  const daysToVote = Math.round((new Date(VOTE_DATE + "T00:00:00").getTime() - todayMs) / 86400000);
-
   const navItems = user.role === "crew_lead" ? NAV_ITEMS_CREW_LEAD : user.role === "manager" ? NAV_ITEMS_MANAGER : NAV_ITEMS_STAFF;
 
   function isActive(_href: string, id: string) {
@@ -226,13 +220,13 @@ export default function AppShell({
               <div className="flex items-center justify-between">
                 <p className="text-[11px] text-gray-500">告示日まで</p>
                 <p className="text-lg font-bold text-orange-500 tabular-nums">
-                  {daysToAnnouncement}<span className="text-xs text-gray-400 ml-0.5">日</span>
+                  {Math.round((new Date("2026-05-04T00:00:00+09:00").getTime() - new Date(new Date().toISOString().slice(0,10) + "T00:00:00+09:00").getTime()) / 86400000)}<span className="text-xs text-gray-400 ml-0.5">日</span>
                 </p>
               </div>
               <div className="flex items-center justify-between">
                 <p className="text-[11px] text-gray-500">投票日まで</p>
                 <p className="text-lg font-bold text-gray-800 tabular-nums">
-                  {daysToVote}<span className="text-xs text-gray-400 ml-0.5">日</span>
+                  {Math.round((new Date("2026-05-11T00:00:00+09:00").getTime() - new Date(new Date().toISOString().slice(0,10) + "T00:00:00+09:00").getTime()) / 86400000)}<span className="text-xs text-gray-400 ml-0.5">日</span>
                 </p>
               </div>
             </div>
