@@ -49,13 +49,13 @@ export default function KianClient({ user, kians }: Props) {
     <AppShell user={user}>
       <div className="flex-1 overflow-y-auto" style={{ backgroundColor: "#f8fafc" }}>
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-3">
-          <div className="flex items-center justify-between">
+        <div className="bg-white border-b border-gray-200 px-4 md:px-6 py-3">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <div>
               <p className="text-[10px] text-gray-400 font-medium tracking-wide">起案管理</p>
               <h1 className="text-base font-bold text-gray-900 leading-tight">起案・議案一覧</h1>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 md:gap-4 flex-wrap">
               <div className="flex items-center gap-3 text-sm">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -119,56 +119,87 @@ export default function KianClient({ user, kians }: Props) {
                     const st = STATUS_STYLE[kian.status as keyof typeof STATUS_STYLE] ?? STATUS_STYLE["未着手"];
                     const isGian = kian.kind === "議案";
                     return (
-                      <div key={kian.id} className={`grid items-center px-5 py-3 transition ${isGian ? "hover:bg-sky-100/80" : "hover:bg-gray-50/50"}`} style={{ gridTemplateColumns: "12px auto 1fr 120px 64px 180px", ...(isGian ? { backgroundColor: "rgba(186, 230, 253, 0.35)" } : {}) }}>
-                        {/* Status dot */}
-                        <span className={`w-2 h-2 rounded-full ${st.dot}`} />
-
-                        {/* Kind badge */}
-                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded mr-2 ${isGian ? "bg-sky-100 text-sky-700 border border-sky-200" : "bg-gray-100 text-gray-500 border border-gray-200"}`}>
-                          {kian.kind}
-                        </span>
-
-                        {/* Title + note */}
-                        <div className="min-w-0 pr-3">
-                          <p className={`text-sm font-medium truncate ${kian.status === "決裁済" ? "text-gray-400" : "text-gray-800"}`}>
-                            {kian.title}
-                          </p>
-                          {kian.note && (
-                            <p className="text-[11px] text-gray-400 mt-0.5 truncate">{kian.note}</p>
-                          )}
-                        </div>
-
-                        {/* Due timing */}
-                        <div className="text-right pr-2">
-                          {kian.due_timing && (
-                            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-lg ${
-                              kian.status === "決裁済" ? "bg-gray-50 text-gray-400" : "bg-orange-50 text-orange-600 border border-orange-100"
-                            }`}>
-                              {kian.due_timing}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Status badge */}
-                        <div className="text-center">
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${st.badge}`}>
-                            {st.label}
+                      <div key={kian.id}>
+                        {/* Desktop row */}
+                        <div className={`hidden md:grid items-center px-5 py-3 transition ${isGian ? "hover:bg-sky-100/80" : "hover:bg-gray-50/50"}`} style={{ gridTemplateColumns: "12px auto 1fr 120px 64px 180px", ...(isGian ? { backgroundColor: "rgba(186, 230, 253, 0.35)" } : {}) }}>
+                          <span className={`w-2 h-2 rounded-full ${st.dot}`} />
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded mr-2 ${isGian ? "bg-sky-100 text-sky-700 border border-sky-200" : "bg-gray-100 text-gray-500 border border-gray-200"}`}>
+                            {kian.kind}
                           </span>
+                          <div className="min-w-0 pr-3">
+                            <p className={`text-sm font-medium truncate ${kian.status === "決裁済" ? "text-gray-400" : "text-gray-800"}`}>
+                              {kian.title}
+                            </p>
+                            {kian.note && (
+                              <p className="text-[11px] text-gray-400 mt-0.5 truncate">{kian.note}</p>
+                            )}
+                          </div>
+                          <div className="text-right pr-2">
+                            {kian.due_timing && (
+                              <span className={`text-[11px] font-medium px-2 py-0.5 rounded-lg ${
+                                kian.status === "決裁済" ? "bg-gray-50 text-gray-400" : "bg-orange-50 text-orange-600 border border-orange-100"
+                              }`}>
+                                {kian.due_timing}
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-center">
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${st.badge}`}>
+                              {st.label}
+                            </span>
+                          </div>
+                          <div className="truncate">
+                            {kian.task_id && kian.task_title ? (
+                              <Link
+                                href={`/tasks/${kian.task_id}`}
+                                className="text-[10px] text-blue-600 hover:text-blue-700 hover:underline font-medium truncate"
+                              >
+                                {kian.task_title}
+                                <svg className="w-3 h-3 inline ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+                              </Link>
+                            ) : (
+                              <span className="text-[10px] text-gray-300">—</span>
+                            )}
+                          </div>
                         </div>
 
-                        {/* Linked task */}
-                        <div className="truncate">
-                          {kian.task_id && kian.task_title ? (
-                            <Link
-                              href={`/tasks/${kian.task_id}`}
-                              className="text-[10px] text-blue-600 hover:text-blue-700 hover:underline font-medium truncate"
-                            >
-                              {kian.task_title}
-                              <svg className="w-3 h-3 inline ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
-                            </Link>
-                          ) : (
-                            <span className="text-[10px] text-gray-300">—</span>
-                          )}
+                        {/* Mobile/Tablet card */}
+                        <div className={`md:hidden px-4 py-3 transition ${isGian ? "hover:bg-sky-100/80" : "hover:bg-gray-50/50"}`} style={isGian ? { backgroundColor: "rgba(186, 230, 253, 0.35)" } : {}}>
+                          <div className="flex items-start gap-2.5">
+                            <span className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${st.dot}`} />
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${isGian ? "bg-sky-100 text-sky-700 border border-sky-200" : "bg-gray-100 text-gray-500 border border-gray-200"}`}>
+                                  {kian.kind}
+                                </span>
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${st.badge}`}>
+                                  {st.label}
+                                </span>
+                                {kian.due_timing && (
+                                  <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-lg ${
+                                    kian.status === "決裁済" ? "bg-gray-50 text-gray-400" : "bg-orange-50 text-orange-600 border border-orange-100"
+                                  }`}>
+                                    {kian.due_timing}
+                                  </span>
+                                )}
+                              </div>
+                              <p className={`text-[13px] font-medium ${kian.status === "決裁済" ? "text-gray-400" : "text-gray-800"}`}>
+                                {kian.title}
+                              </p>
+                              {kian.note && (
+                                <p className="text-[11px] text-gray-400 mt-0.5">{kian.note}</p>
+                              )}
+                              {kian.task_id && kian.task_title && (
+                                <Link
+                                  href={`/tasks/${kian.task_id}`}
+                                  className="text-[10px] text-blue-600 hover:underline font-medium mt-1 inline-block"
+                                >
+                                  {kian.task_title}
+                                  <svg className="w-3 h-3 inline ml-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+                                </Link>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     );

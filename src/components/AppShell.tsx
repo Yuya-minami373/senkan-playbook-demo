@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -136,6 +136,12 @@ export default function AppShell({
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  // Close mobile sidebar on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   const navItems = user.role === "crew_lead" ? NAV_ITEMS_CREW_LEAD : user.role === "manager" ? NAV_ITEMS_MANAGER : NAV_ITEMS_STAFF;
 
@@ -163,19 +169,43 @@ export default function AppShell({
 
   const initials = user.name ? user.name.charAt(0) : "?";
 
-  return (
-    <div
-      className="h-screen flex overflow-hidden"
-      style={{ fontFamily: "'Inter', 'Hiragino Sans', 'Noto Sans JP', sans-serif", backgroundColor: "#f8fafc" }}
-    >
-      {/* ━━━ Sidebar ━━━ */}
-      <aside
-        className="flex flex-col shrink-0 border-r border-gray-200 bg-white transition-all duration-200"
-        style={{ width: collapsed ? 56 : 220 }}
-      >
-        {/* Logo + collapse toggle */}
-        <div className={`pt-4 pb-3 border-b border-gray-100 flex items-center ${collapsed ? "flex-col gap-2 px-2" : "px-4 justify-between"}`}>
-          {collapsed ? (
+  // Shared sidebar content
+  function SidebarContent({ isMobile }: { isMobile?: boolean }) {
+    return (
+      <>
+        {/* Logo */}
+        <div className={`pt-4 pb-3 border-b border-gray-100 ${isMobile ? "px-4 flex items-center justify-between" : collapsed ? "flex flex-col gap-2 items-center px-2" : "px-4 flex items-center justify-between"}`}>
+          {isMobile || !collapsed ? (
+            <>
+              <div>
+                <div className="inline-block">
+                  <Image src="/logo.png" alt="UniPoll" width={160} height={40} className="h-5 w-auto" />
+                </div>
+                <p className="text-[15px] text-blue-600 mt-1 font-bold tracking-wide">UniGuide</p>
+                <p className="text-[10px] text-gray-400 mt-0.5 tracking-wide whitespace-nowrap">選管専用の、業務ガイドツール</p>
+              </div>
+              {isMobile ? (
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  className="w-8 h-8 rounded-md flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setCollapsed(true)}
+                  className="w-7 h-7 rounded-md flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition shrink-0"
+                  title="サイドバーを閉じる"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                  </svg>
+                </button>
+              )}
+            </>
+          ) : (
             <>
               <div className="bg-blue-600 rounded-lg p-1 flex items-center justify-center" style={{ width: 36, height: 36 }}>
                 <Image src="/logo-icon.png" alt="UniPoll" width={32} height={32} className="w-full h-full object-contain brightness-0 invert" />
@@ -190,30 +220,11 @@ export default function AppShell({
                 </svg>
               </button>
             </>
-          ) : (
-            <>
-              <div>
-                <div className="inline-block">
-                  <Image src="/logo.png" alt="UniPoll" width={160} height={40} className="h-5 w-auto" />
-                </div>
-                <p className="text-[15px] text-blue-600 mt-1 font-bold tracking-wide">UniGuide</p>
-                <p className="text-[10px] text-gray-400 mt-0.5 tracking-wide whitespace-nowrap">選管専用の、業務ガイドツール</p>
-              </div>
-              <button
-                onClick={() => setCollapsed(true)}
-                className="w-7 h-7 rounded-md flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition shrink-0"
-                title="サイドバーを閉じる"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                </svg>
-              </button>
-            </>
           )}
         </div>
 
-        {/* Election info — hidden when collapsed */}
-        {!collapsed && (
+        {/* Election info */}
+        {(isMobile || !collapsed) && (
           <div className="px-4 py-4 border-b border-gray-100">
             <p className="text-[13px] text-gray-800 font-bold mb-3">{electionName}</p>
             <div className="space-y-1.5 mb-3">
@@ -257,16 +268,17 @@ export default function AppShell({
         )}
 
         {/* Navigation */}
-        <nav className={`py-3 space-y-0.5 flex-1 ${collapsed ? "px-1.5" : "px-3"}`}>
+        <nav className={`py-3 space-y-0.5 flex-1 ${isMobile ? "px-3" : collapsed ? "px-1.5" : "px-3"}`}>
           {navItems.map((item) => {
             const active = isActive(item.href, item.id);
+            const showLabel = isMobile || !collapsed;
             return (
               <Link
                 key={item.id}
                 href={item.href}
-                title={collapsed ? item.label : undefined}
+                title={!showLabel ? item.label : undefined}
                 className={`flex items-center gap-3 rounded-lg text-sm transition-colors ${
-                  collapsed ? "justify-center px-0 py-2.5" : "px-3 py-2"
+                  !showLabel ? "justify-center px-0 py-2.5" : "px-3 py-2"
                 } ${
                   active
                     ? "bg-blue-50 text-blue-600 font-semibold"
@@ -274,15 +286,15 @@ export default function AppShell({
                 }`}
               >
                 <NavIcon name={item.icon} className={`w-4 h-4 shrink-0 ${active ? "text-blue-600" : "text-gray-400"}`} />
-                {!collapsed && <span className="text-[13px] flex-1">{item.label}</span>}
+                {showLabel && <span className="text-[13px] flex-1">{item.label}</span>}
               </Link>
             );
           })}
         </nav>
 
         {/* User info */}
-        <div className={`py-3 border-t border-gray-100 ${collapsed ? "px-1.5" : "px-3"}`}>
-          {collapsed ? (
+        <div className={`py-3 border-t border-gray-100 ${isMobile ? "px-3" : collapsed ? "px-1.5" : "px-3"}`}>
+          {!isMobile && collapsed ? (
             <div className="flex justify-center">
               <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white text-xs font-bold" title={user.name}>
                 {initials}
@@ -309,10 +321,50 @@ export default function AppShell({
             </div>
           )}
         </div>
+      </>
+    );
+  }
+
+  return (
+    <div
+      className="h-screen flex overflow-hidden"
+      style={{ fontFamily: "'Inter', 'Hiragino Sans', 'Noto Sans JP', sans-serif", backgroundColor: "#f8fafc" }}
+    >
+      {/* ━━━ Mobile header ━━━ */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 bg-white border-b border-gray-200 flex items-center gap-3 px-4 py-2.5">
+        <button
+          onClick={() => setMobileOpen(true)}
+          className="w-8 h-8 rounded-md flex items-center justify-center text-gray-500 hover:bg-gray-100 transition"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <p className="text-sm font-bold text-blue-600">UniGuide</p>
+      </div>
+
+      {/* ━━━ Mobile slide-over sidebar ━━━ */}
+      {mobileOpen && (
+        <div className="md:hidden fixed inset-0 z-50">
+          {/* Overlay */}
+          <div className="absolute inset-0 bg-black/30" onClick={() => setMobileOpen(false)} />
+          {/* Sidebar panel */}
+          <aside className="absolute top-0 left-0 bottom-0 w-72 bg-white shadow-xl flex flex-col overflow-y-auto">
+            <SidebarContent isMobile />
+          </aside>
+        </div>
+      )}
+
+      {/* ━━━ Desktop sidebar ━━━ */}
+      <aside
+        className="hidden md:flex flex-col shrink-0 border-r border-gray-200 bg-white transition-all duration-200"
+        style={{ width: collapsed ? 56 : 220 }}
+      >
+        <SidebarContent />
       </aside>
 
       {/* ━━━ Content area ━━━ */}
-      <div className="flex-1 min-w-0 overflow-hidden flex flex-col">
+      <div className="flex-1 min-w-0 overflow-hidden flex flex-col pt-[52px] md:pt-0">
         {children}
       </div>
 
