@@ -40,6 +40,16 @@
     {"no":2,"name":"上柴公民館（キララ上柴）","address":"深谷市上柴町西4-2-14","lat":36.1819613,"lng":139.297881,"voting_area":null,"accessibility":null,"type":"early"},
     {"no":3,"name":"岡部公民館","address":"深谷市岡2381-1","lat":36.2009277,"lng":139.239285,"voting_area":null,"accessibility":null,"type":"early"},
     {"no":4,"name":"川本公民館（ワモア川本）","address":"深谷市菅沼401","lat":36.13734,"lng":139.28531,"voting_area":null,"accessibility":null,"type":"early"},
-    {"no":5,"name":"花園公民館","address":"深谷市小前田2345","lat":36.1328846,"lng":139.2258683,"voting_area":null,"accessibility":null,"type":"early"}
+    {"no":5,"name":"花園公民館","address":"深谷市小前田2345","lat":36.1328846,"lng":139.2258683,"voting_area":null,"accessibility":null,"type":"early"},
+    {"no":1,"name":"深谷駅北口ロータリー","address":"深谷市西島町3丁目","lat":36.1925,"lng":139.2818,"voting_area":null,"accessibility":null,"type":"poster"},
+    {"no":2,"name":"市役所前交差点","address":"深谷市仲町11","lat":36.1975,"lng":139.2808,"voting_area":null,"accessibility":null,"type":"poster"},
+    {"no":3,"name":"上柴ショッピングセンター前","address":"深谷市上柴町西4丁目","lat":36.1815,"lng":139.2960,"voting_area":null,"accessibility":null,"type":"poster"},
+    {"no":4,"name":"岡部駅前","address":"深谷市岡2951","lat":36.2035,"lng":139.2375,"voting_area":null,"accessibility":null,"type":"poster"},
+    {"no":5,"name":"花園IC入口交差点","address":"深谷市荒川1060","lat":36.1340,"lng":139.2530,"voting_area":null,"accessibility":null,"type":"poster"},
+    {"no":6,"name":"アリオ深谷前","address":"深谷市上柴町西4丁目2-14","lat":36.1822,"lng":139.2985,"voting_area":null,"accessibility":null,"type":"poster"},
+    {"no":7,"name":"豊里中学校前","address":"深谷市新戒740","lat":36.2310,"lng":139.2880,"voting_area":null,"accessibility":null,"type":"poster"},
+    {"no":8,"name":"川本総合支所前","address":"深谷市菅沼401","lat":36.1380,"lng":139.2860,"voting_area":null,"accessibility":null,"type":"poster"},
+    {"no":9,"name":"武川駅前","address":"深谷市大字菅沼","lat":36.1410,"lng":139.2780,"voting_area":null,"accessibility":null,"type":"poster"},
+    {"no":10,"name":"明戸交差点","address":"深谷市蓮沼350","lat":36.2150,"lng":139.3150,"voting_area":null,"accessibility":null,"type":"poster"}
   ]
 }
