@@ -207,8 +207,8 @@ export default function AppShell({
             </>
           ) : (
             <>
-              <div className="bg-blue-600 rounded-lg p-1 flex items-center justify-center" style={{ width: 36, height: 36 }}>
-                <Image src="/logo-icon.png" alt="UniPoll" width={32} height={32} className="w-full h-full object-contain brightness-0 invert" />
+              <div className="flex items-center justify-center" style={{ width: 36, height: 36 }}>
+                <Image src="/logo-icon.png" alt="UniPoll" width={36} height={36} className="w-full h-full object-contain" />
               </div>
               <button
                 onClick={() => setCollapsed(false)}

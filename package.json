@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev --port 3004 --no-turbopack",
+    "dev": "next dev --port 3004",
     "build": "next build",
     "start": "next start --port 3004",
     "demo": "next build && next start --port 3004",
