@@ -70,7 +70,7 @@ export default function LoginPage() {
               UniGuide
             </h1>
             <p className="text-white/90 text-[15px] font-bold leading-relaxed mb-3">
-              答えは、UniGuideの中に。
+              ノウハウは、UniGuideの中に。
             </p>
             <p className="text-blue-200/70 text-[13px] leading-relaxed">
               選管専用の、業務ガイドツール。
@@ -106,7 +106,7 @@ export default function LoginPage() {
                 <Image src="/logo.png" alt="UniPoll" width={100} height={28} className="h-5 w-auto brightness-0 invert" />
               </div>
             </div>
-            <p className="text-blue-600 text-sm font-bold">答えは、UniGuideの中に。</p>
+            <p className="text-blue-600 text-sm font-bold">ノウハウは、UniGuideの中に。</p>
           </div>
 
           <div className="mb-8">
