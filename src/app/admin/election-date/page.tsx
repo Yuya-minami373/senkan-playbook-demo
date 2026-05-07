@@ -1,4 +1,5 @@
 import { initDb, query, queryOne } from "@/lib/db";
+import { getSession } from "@/lib/auth";
 import AdminElectionDateClient from "./AdminElectionDateClient";
 
 export const dynamic = "force-dynamic";
@@ -11,6 +12,8 @@ interface Election {
 
 export default async function AdminElectionDatePage() {
   await initDb();
+  const session = await getSession();
+
   const election = await queryOne<Election>(
     "SELECT id, name, election_date FROM elections ORDER BY id LIMIT 1"
   );
@@ -29,6 +32,7 @@ export default async function AdminElectionDatePage() {
 
   return (
     <AdminElectionDateClient
+      user={session}
       election={electionPlain}
       taskCount={Number(taskCount)}
       crewCount={Number(crewCount)}

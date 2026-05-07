@@ -6,7 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { User } from "@/lib/auth";
 
-type IconName = "grid" | "chart-bar" | "phone" | "book-open" | "map-pin" | "clipboard-doc" | "users" | "flow";
+type IconName = "grid" | "chart-bar" | "phone" | "book-open" | "map-pin" | "clipboard-doc" | "users" | "flow" | "cog";
 
 const NAV_ICON_PATHS: Record<IconName, string> = {
   "grid": "M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z",
@@ -17,6 +17,7 @@ const NAV_ICON_PATHS: Record<IconName, string> = {
   "map-pin": "M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z",
   "users": "M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z",
   "flow": "M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z",
+  "cog": "M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.27 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z M15 12a3 3 0 11-6 0 3 3 0 016 0z",
 };
 
 function NavIcon({ name, className }: { name: IconName; className?: string }) {
@@ -108,6 +109,7 @@ const NAV_ITEMS_STAFF: { id: string; icon: IconName; label: string; href: string
   { id: "manuals",     icon: "book-open",      label: "マニュアル",     href: "/manuals" },
   { id: "map",         icon: "map-pin",        label: "投票所・ポス掲マップ", href: "/map" },
   { id: "crew",        icon: "users",          label: "UniPollクルー",  href: "/crew" },
+  { id: "election-date", icon: "cog",          label: "選挙期日設定",   href: "/admin/election-date" },
 ];
 
 const NAV_ITEMS_MANAGER: { id: string; icon: IconName; label: string; href: string }[] = [
@@ -118,10 +120,12 @@ const NAV_ITEMS_MANAGER: { id: string; icon: IconName; label: string; href: stri
   { id: "manuals",    icon: "book-open",       label: "マニュアル",     href: "/manuals" },
   { id: "map",        icon: "map-pin",         label: "投票所・ポス掲マップ", href: "/map" },
   { id: "crew",       icon: "users",           label: "UniPollクルー",  href: "/crew" },
+  { id: "election-date", icon: "cog",          label: "選挙期日設定",   href: "/admin/election-date" },
 ];
 
 const NAV_ITEMS_CREW_LEAD: { id: string; icon: IconName; label: string; href: string }[] = [
-  { id: "crew-report", icon: "chart-bar", label: "時間帯報告", href: "/crew/report" },
+  { id: "crew-report",   icon: "chart-bar", label: "時間帯報告",   href: "/crew/report" },
+  { id: "election-date", icon: "cog",       label: "選挙期日設定", href: "/admin/election-date" },
 ];
 
 export default function AppShell({

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import AppShell from "@/components/AppShell";
 
 interface Election {
   id: number;
@@ -9,7 +10,15 @@ interface Election {
   election_date: string;
 }
 
+interface SessionUser {
+  id: number;
+  name: string;
+  role: "staff" | "manager" | "unipoll" | "crew_lead";
+  category: string | null;
+}
+
 interface Props {
+  user: SessionUser | null;
   election: Election | null;
   taskCount: number;
   crewCount: number;
@@ -36,6 +45,7 @@ function diffDays(from: string, to: string): number {
 }
 
 export default function AdminElectionDateClient({
+  user,
   election,
   taskCount,
   crewCount,
@@ -89,14 +99,15 @@ export default function AdminElectionDateClient({
   }
 
   if (!election) {
-    return (
+    const errBlock = (
       <div className="min-h-screen bg-gray-50 p-8">
         <p className="text-red-600">elections レコードが存在しません。</p>
       </div>
     );
+    return user ? <AppShell user={user}>{errBlock}</AppShell> : errBlock;
   }
 
-  return (
+  const content = (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-3xl mx-auto p-6 md:p-10">
         <div className="mb-6">
@@ -251,4 +262,6 @@ export default function AdminElectionDateClient({
       )}
     </div>
   );
+
+  return user ? <AppShell user={user}>{content}</AppShell> : content;
 }
