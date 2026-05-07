@@ -5,10 +5,12 @@ import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import FlowOverview from "@/components/FlowChart/FlowOverview";
 import FlowCategory from "@/components/FlowChart/FlowCategory";
+import { setElectionDates } from "@/components/FlowChart/flowConstants";
 import type { User } from "@/lib/auth";
 
-const ANNOUNCEMENT_DATE = "2026-05-04";
-const VOTE_DATE = "2026-05-11";
+// fallback 初期値。マウント後に /api/elections/current で実値で上書きされる
+const DEFAULT_ANNOUNCEMENT_DATE = "2026-05-04";
+const DEFAULT_VOTE_DATE = "2026-05-11";
 
 interface Task {
   id: number;
@@ -85,7 +87,27 @@ export default function DashboardClient({
   const [flowView, setFlowView] = useState<"overview" | "category">("overview");
   const [flowCategory, setFlowCategory] = useState<string | null>(null);
   const [showCompleted, setShowCompleted] = useState(false);
+  const [ANNOUNCEMENT_DATE, setAnnouncementDate] = useState(DEFAULT_ANNOUNCEMENT_DATE);
+  const [VOTE_DATE, setVoteDate] = useState(DEFAULT_VOTE_DATE);
   const ganttScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/elections/current", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled || !data?.election) return;
+        const ann = data.election.announcement_date;
+        const vote = data.election.election_date;
+        setElectionDates(ann, vote);
+        if (vote) setVoteDate(vote);
+        if (ann) setAnnouncementDate(ann);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const [ganttScrollLeft, setGanttScrollLeft] = useState(0);
 

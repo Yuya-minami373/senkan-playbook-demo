@@ -5,11 +5,12 @@ import Link from "next/link";
 import AppShell from "@/components/AppShell";
 import FlowOverview from "@/components/FlowChart/FlowOverview";
 import FlowCategory from "@/components/FlowChart/FlowCategory";
+import { setElectionDates } from "@/components/FlowChart/flowConstants";
 import type { User } from "@/lib/auth";
 
-// デモ用選挙日程
-const ANNOUNCEMENT_DATE = "2026-05-04"; // 告示日
-const VOTE_DATE = "2026-05-11";         // 投票日
+// fallback 初期値。マウント後に /api/elections/current で実値で上書きされる
+const DEFAULT_ANNOUNCEMENT_DATE = "2026-05-04";
+const DEFAULT_VOTE_DATE = "2026-05-11";
 
 interface Task {
   id: number;
@@ -76,9 +77,29 @@ export default function ManagerClient({ session, tasks, staffUsers, urgentTasks,
   const [selectedCalDate, setSelectedCalDate] = useState<string | null>(null);
   const [selectedCalCategory, setSelectedCalCategory] = useState<string>("all");
   const [showCompleted, setShowCompleted] = useState(false);
+  const [ANNOUNCEMENT_DATE, setAnnouncementDate] = useState(DEFAULT_ANNOUNCEMENT_DATE);
+  const [VOTE_DATE, setVoteDate] = useState(DEFAULT_VOTE_DATE);
   const ganttScrollRef = useRef<HTMLDivElement>(null);
   // ユニポールアカウントかつviewAs=manager以外のとき実績カレンダー・UniReportを表示
   const isUnipoll = session.role === "unipoll" && viewAs !== "manager";
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/elections/current", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled || !data?.election) return;
+        const ann = data.election.announcement_date;
+        const vote = data.election.election_date;
+        setElectionDates(ann, vote);
+        if (vote) setVoteDate(vote);
+        if (ann) setAnnouncementDate(ann);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const [callStats, setCallStats] = useState<CallStats | null>(null);
   useEffect(() => {

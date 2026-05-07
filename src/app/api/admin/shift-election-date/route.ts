@@ -90,10 +90,16 @@ export async function POST(request: Request) {
     [modifier]
   );
 
-  await execute(`UPDATE elections SET election_date = ? WHERE id = ?`, [
-    newDate,
-    election.id,
-  ]);
+  await execute(
+    `UPDATE elections
+       SET election_date = ?,
+           announcement_date = CASE
+             WHEN announcement_date IS NOT NULL THEN date(announcement_date, ?)
+             ELSE date(?, '-7 days')
+           END
+       WHERE id = ?`,
+    [newDate, modifier, newDate, election.id]
+  );
 
   const taskCount = (await query<{ c: number }>("SELECT COUNT(*) as c FROM tasks"))[0]?.c ?? 0;
   const crewCount = (await query<{ c: number }>("SELECT COUNT(*) as c FROM crew_locations"))[0]?.c ?? 0;

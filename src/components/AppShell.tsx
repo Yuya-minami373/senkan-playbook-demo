@@ -141,10 +141,28 @@ export default function AppShell({
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [announcementDate, setAnnouncementDate] = useState<string | null>(null);
+  const [voteDate, setVoteDate] = useState<string | null>(null);
 
   // Close mobile sidebar on route change
   useEffect(() => {
     setMobileOpen(false);
+  }, [pathname]);
+
+  // Fetch current election dates from DB (re-fetched on route change so /admin/election-date 適用後も反映)
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/elections/current", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((data) => {
+        if (cancelled || !data?.election) return;
+        setVoteDate(data.election.election_date ?? null);
+        setAnnouncementDate(data.election.announcement_date ?? null);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
   }, [pathname]);
 
   const navItems = user.role === "crew_lead" ? NAV_ITEMS_CREW_LEAD : user.role === "manager" ? NAV_ITEMS_MANAGER : NAV_ITEMS_STAFF;
@@ -235,13 +253,17 @@ export default function AppShell({
               <div className="flex items-center justify-between">
                 <p className="text-[11px] text-gray-500">告示日まで</p>
                 <p className="text-lg font-bold text-orange-500 tabular-nums">
-                  {Math.round((new Date("2026-05-04T00:00:00+09:00").getTime() - new Date(new Date().toISOString().slice(0,10) + "T00:00:00+09:00").getTime()) / 86400000)}<span className="text-xs text-gray-400 ml-0.5">日</span>
+                  {announcementDate
+                    ? Math.round((new Date(announcementDate + "T00:00:00+09:00").getTime() - new Date(new Date().toISOString().slice(0,10) + "T00:00:00+09:00").getTime()) / 86400000)
+                    : "-"}<span className="text-xs text-gray-400 ml-0.5">日</span>
                 </p>
               </div>
               <div className="flex items-center justify-between">
                 <p className="text-[11px] text-gray-500">投票日まで</p>
                 <p className="text-lg font-bold text-gray-800 tabular-nums">
-                  {Math.round((new Date("2026-05-11T00:00:00+09:00").getTime() - new Date(new Date().toISOString().slice(0,10) + "T00:00:00+09:00").getTime()) / 86400000)}<span className="text-xs text-gray-400 ml-0.5">日</span>
+                  {voteDate
+                    ? Math.round((new Date(voteDate + "T00:00:00+09:00").getTime() - new Date(new Date().toISOString().slice(0,10) + "T00:00:00+09:00").getTime()) / 86400000)
+                    : "-"}<span className="text-xs text-gray-400 ml-0.5">日</span>
                 </p>
               </div>
             </div>

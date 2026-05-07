@@ -185,6 +185,10 @@ async function runMigrations(c: Client): Promise<void> {
   try { await c.execute("SELECT sub_assignee_id FROM tasks LIMIT 0"); } catch {
     await c.execute("ALTER TABLE tasks ADD COLUMN sub_assignee_id INTEGER");
   }
+  try { await c.execute("SELECT announcement_date FROM elections LIMIT 0"); } catch {
+    await c.execute("ALTER TABLE elections ADD COLUMN announcement_date TEXT");
+    await c.execute("UPDATE elections SET announcement_date = date(election_date, '-7 days') WHERE announcement_date IS NULL");
+  }
 }
 
 // ── Seed ────────────────────────────────────────────

@@ -1,6 +1,16 @@
-// デモ用選挙日程（ManagerClient.tsxと同じ）
-export const ANNOUNCEMENT_DATE = "2026-05-04";
-export const VOTE_DATE = "2026-05-11";
+// デモ用選挙日程。fallback 初期値で、AppShell/Dashboard/Manager が
+// /api/elections/current から取得した値で setElectionDates() 経由で上書きする。
+// ES modules の live binding により、別モジュールからの import 参照も最新値を読む。
+export let ANNOUNCEMENT_DATE = "2026-05-04";
+export let VOTE_DATE = "2026-05-11";
+
+export function setElectionDates(
+  announcement: string | null | undefined,
+  vote: string | null | undefined
+) {
+  if (announcement) ANNOUNCEMENT_DATE = announcement;
+  if (vote) VOTE_DATE = vote;
+}
 
 export const CATEGORY_ORDER = [
   "入場整理券",
